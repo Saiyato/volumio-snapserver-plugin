@@ -1,0 +1,190 @@
+#!/bin/bash
+echo "Installing SnapServer and dependencies..."
+INSTALLING="/home/volumio/snapcast-plugin.installing"
+
+if [ ! -f $INSTALLING ]; then
+
+	touch $INSTALLING
+	# Echo version number, for bug tracking purposes
+	echo "## Installing SnapServer plugin v1.0.1 ##"
+	
+	echo "Detecting CPU architecture and Debian version"
+	ARCH=$(lscpu | awk 'FNR == 1 {print $2}')
+	DEBIAN_VERSION=$(cat /etc/os-release | grep '^VERSION=' | cut -d '(' -f2 | tr -d ')"')
+	echo "CPU architecture: " $ARCH
+	echo "Debian version: " $DEBIAN_VERSION
+
+	# Download latest SnapCast packages
+	mkdir /home/volumio/snapcast
+
+	if [ $ARCH = "armv6l" ] || [ $ARCH = "armv7l" ]; then
+		if [ $DEBIAN_VERSION = "jessie" ]; then
+			echo "Defaulting to known working version of SnapCast components (0.15.0-armhf)"
+			cp -f /data/plugins/audio_interface/snapserver/binaries/snapserver_0.15.0_armhf.deb /home/volumio/snapcast
+		else
+			echo "Fetching latest releases of SnapCast components..."
+			wget $(curl -s https://api.github.com/repos/badaix/snapcast/releases/latest | grep 'armhf' | grep 'server' | cut -d\" -f4) -P /home/volumio/snapcast
+		fi
+	elif [ $ARCH = "i686" ] || [ $ARCH = "x86_64" ]; then
+		if [ $DEBIAN_VERSION = "jessie" ]; then
+			echo "Defaulting to known working version of SnapCast components (0.15.0-amd64)"
+			cp -f /data/plugins/audio_interface/snapserver/binaries/snapserver_0.15.0_amd64.deb /home/volumio/snapcast			
+		else
+			echo "Fetching latest releases of SnapCast components..."
+			wget $(curl -s https://api.github.com/repos/badaix/snapcast/releases/latest | grep 'amd64' | grep 'server' | cut -d\" -f4) -P /home/volumio/snapcast
+		fi
+	else 
+		echo "This architecture is not yet supported, you must build the snap*-packages yourself. Detected architecture: " $ARCH
+	fi
+
+	# Backup old snap* installations
+	mv /usr/sbin/snapserver /usr/sbin/snapserver.bak
+
+	# Install packages (server and client) and dependencies
+	for f in /home/volumio/snapcast/snap*.deb; do dpkg -i "$f"; done
+	apt-get update && apt-get -f -y install
+	
+	# Link to administrative tools
+	ln -fs /usr/bin/snapserver /usr/sbin/snapserver
+	
+	# Configure ALSA for use with SnapServer
+	if [ -f "/etc/asound.conf" ];
+	then
+		# Add or update asound.conf
+		if grep -q "snapcast" /etc/asound.conf;
+		then
+			sed -i '/#SNAPCAST/,/#ENDOFSNAPCAST/d' /etc/asound.conf
+		fi
+		# Append to /etc/asound.conf
+			echo "
+	#SNAPCAST
+	pcm.!snapcast {
+		type plug
+		slave.pcm snapConverter
+	}
+
+	pcm.snapConverter {
+		type rate
+		slave {
+			pcm writeFile # Direct to the plugin which will write to a file
+			format S16_LE
+			rate 48000
+		}
+	}	
+
+	pcm.writeFile {
+		type file
+		slave.pcm null
+		file \"/tmp/snapfifo\"
+		format \"raw\"
+	}
+	#ENDOFSNAPCAST
+	" >> /etc/asound.conf
+	else
+		# Write /etc/asound.conf		
+		echo "
+	#SNAPCAST
+	pcm.!snapcast {
+		type plug
+		slave.pcm snapConverter
+	}
+	
+	pcm.snapConverter {
+		type rate
+		slave {
+			pcm writeFile # Direct to the plugin which will write to a file
+			format S16_LE
+			rate 48000
+		}
+	}
+
+	pcm.writeFile {
+		type file
+		slave.pcm null
+		file \"/tmp/snapfifo\"
+		format \"raw\"
+	}
+	#ENDOFSNAPCAST
+	" | sudo tee /etc/asound.conf
+	fi
+	
+	chown volumio:volumio /etc/asound.conf
+	chmod g+w /etc/asound.conf
+	
+	# Legacy patching of Volspotconnect config files
+	if [ -d "/data/plugins/music_service/volspotconnect/spotify-connect-web/etc" ];
+	then
+		# Add lines
+		sed -i -- '/slave.pcm spotoutf/a updateLine' /data/plugins/music_service/volspotconnect/asound.tmpl
+		sed -i -- '/slave.pcm spotoutf/a updateLine' /etc/asound.conf
+		# Update lines
+		sed -i -- 's|slave.pcm spotoutf|#slave.pcm spotoutf|g' /data/plugins/music_service/volspotconnect/asound.tmpl
+		sed -i -- 's|updateLine|slave.pcm writeFile|g' /data/plugins/music_service/volspotconnect/asound.tmpl
+		sed -i -- 's|slave.pcm spotoutf|#slave.pcm spotoutf|g' /etc/asound.conf
+		sed -i -- 's|updateLine|slave.pcm writeFile|g' /etc/asound.conf
+		chmod g+w /data/plugins/music_service/volspotconnect/asound.tmpl
+	
+		# Fix chrooted spotify-connect-web
+		if ! grep -q "asound.conf" /data/plugins/music_service/volspotconnect/spotify-connect-web/etc ;
+		then
+			if [ -f "/data/plugins/music_service/volspotconnect/spotify-connect-web/etc/asound.conf"];
+			then				
+				rm /data/plugins/music_service/volspotconnect/spotify-connect-web/etc/asound.conf
+			fi
+			ln -sf /etc/asound.conf /data/plugins/music_service/volspotconnect/spotify-connect-web/etc/asound.conf
+		fi
+		
+		sed -i -- '/slave.pmc spotoutf/a slave.pcm writeFile' /etc/asound.conf
+		sed -i -- 's|slave.pmc spotoutf|#slave.pcm spotoutf|g' /etc/asound.conf
+	fi
+	
+	# Patch Volspotconnect2 [old version]
+	if [ -d "/data/plugins/music_service/volspotconnect2" ];
+	then
+		# Update volspotconnect2 template file (legacy config)
+		sed -i -- 's|--device ${outdev}.*|--backend pipe --device /tmp/snapfifo ${normalvolume} \\|g' /data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl
+		
+		# Update volspotconnect2 template file (toml template); device and backend are amended
+		sed -i -- 's|device =.*|device = \x27/tmp/snapfifo\x27|g' /data/plugins/music_service/volspotconnect2/volspotify.tmpl
+		sed -i -- 's|backend =.*|backend = \x27pipe\x27|g' /data/plugins/music_service/volspotconnect2/volspotify.tmpl
+	fi
+	
+	# Patch MPD config
+	sed -i -- 's|.*enabled.*|    enabled         "yes"|g' /etc/mpd.conf
+	sed -i -- 's|.*format.*|    format          "44100:16:2"|g' /etc/mpd.conf
+	
+	# Disable standard output to ALSA
+	ALSA_ENABLED=$(sed -n "/.*type.*\"alsa\"/{n;p}" /etc/mpd.conf)
+
+	case $ALSA_ENABLED in
+	 *enabled*) sed -i -- '/.*type.*alsa.*/!b;n;c\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ enabled\ \ \ \ \ \ \ \ \ "no"' /etc/mpd.conf ;;
+	 *) sed -i -- 's|.*type.*alsa.*|&\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ enabled\ \ \ \ \ \ \ \ \ "no"|g' /etc/mpd.conf ;;
+	esac
+	
+	# Reload ALSA with the new config
+	alsactl restore	
+	
+	# Edit the systemd units
+	systemctl enable /data/plugins/audio_interface/snapserver/spotififo.service
+	systemctl start spotififo.service
+	systemctl disable snapserver.service
+	
+	# Reload the systemd manager config and restart MPD
+	systemctl daemon-reload
+	systemctl restart mpd
+	systemctl stop snapserver
+	
+	# Remove files and replace them with symlinks
+	rm /etc/default/snapserver
+	ln -fs /data/plugins/audio_interface/snapserver/default/snapserver /etc/default/snapserver
+	
+	# Cleanup files
+	rm -rf /home/volumio/snapcast
+	rm $INSTALLING
+	
+	#required to end the plugin install
+	echo "plugininstallend"
+
+else
+	echo "Plugin is already installing! Not continuing, check the log files for any errors during installation."
+fi
