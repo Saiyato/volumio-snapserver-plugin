@@ -278,8 +278,8 @@
 			"mpd_channels",
 			"enable_alsa_mpd",
 			"enable_fifo_mpd",
-			"patch_spotify_conf",
-			"patch_airplay_conf"]
+			"enable_spotify_service",
+			"enable_airplay_service"]
 		},
 		"content": [{
 			"id": "patch_mpd_conf",
@@ -367,19 +367,19 @@
 			}
 		},
 		{
-			"id": "patch_spotify_conf",
+			"id": "enable_spotify_service",
 			"element": "switch",
-			"doc": "TRANSLATE.SNAPSERVER.D_PATCH_SPOTIFY_CONF",
-			"description": "TRANSLATE.SNAPSERVER.DD_PATCH_SPOTIFY_CONF",
-			"label": "TRANSLATE.SNAPSERVER.PATCH_SPOTIFY_CONF",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_SPOTIFY_SVC",
+			"description": "TRANSLATE.SNAPSERVER.DD_ENABLE_SPOTIFY_SVC",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_SPOTIFY_SVC",
 			"value": true
 		},
 		{
-			"id": "patch_airplay_conf",
+			"id": "enable_airplay_service",
 			"element": "switch",
-			"doc": "TRANSLATE.SNAPSERVER.D_PATCH_AIRPLAY_CONF",
-			"description": "TRANSLATE.SNAPSERVER.DD_PATCH_AIRPLAY_CONF",
-			"label": "TRANSLATE.SNAPSERVER.PATCH_AIRPLAY_CONF",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_AIRPLAY_SVC",
+			"description": "TRANSLATE.SNAPSERVER.DD_ENABLE_AIRPLAY_SVC",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_AIRPLAY_SVC",
 			"value": true
 		}]
 	}]

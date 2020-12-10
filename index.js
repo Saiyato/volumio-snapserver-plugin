@@ -223,14 +223,14 @@ snapserver.prototype.updatePlayerConfigs = function(newConfig) {
 		self.config.set('enable_fifo_mpd', data['enable_fifo_mpd']);
 		self.updateMpdConfig();
 	}
-	if(newConfig['patch_spotify_conf'])
+	if(newConfig['enable_spotify_service'])
 	{
-		self.config.set('patch_spotify_conf', data['patch_spotify_conf']);
+		self.config.set('enable_spotify_service', data['enable_spotify_service']);
 		self.updateSpotifyConfig();
 	}
-	if(newConfig['patch_airplay_conf'])
+	if(newConfig['enable_airplay_service'])
 	{
-		self.config.set('patch_airplay_conf', data['patch_airplay_conf']);
+		self.config.set('enable_spotify_service', data['enable_spotify_service']);
 		self.updateShairportConfig();
 	}
 	
@@ -292,7 +292,7 @@ snapserver.prototype.updateSpotifyConfig = function() {
 	var self = this;
 	var defer = libQ.defer();
 	
-	if(self.get.('patch_spotify_conf'))
+	if(self.get.config('enable_spotify_service'))
 	{
 		// Spop
 		self.streamEdit("alsa", "raw", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
@@ -366,7 +366,7 @@ snapserver.prototype.patchAsoundConfig = function()
 	})
 	.then(function (clear_current_asound_config) {
 		let edefer = libQ.defer();
-		let pluginName = __dirname.split('/').slice(-1)).toUpperCase();
+		let pluginName = __dirname.split('/').slice(-1).toUpperCase();
 		exec("/bin/sed -i -- '/#" + pluginName + "/,/#ENDOF" + pluginName + "/d' "+ __dirname +"/templates/asound.conf", {uid:1000, gid:1000}, function (error, stout, stderr) {
 			if(error)
 			{
@@ -382,7 +382,7 @@ snapserver.prototype.patchAsoundConfig = function()
 		let edefer = libQ.defer();
 		// needs alsactl -L -R restore
 		var cmd = "/bin/cat " + __dirname + "/templates/asound.section >> "+ __dirname +"/templates/asound.conf";
-		fs.writeFile(__dirname + "/" + __dirname.split('/').slice(-1)) + "_asound_patch.sh", cmd, 'utf8', function (err) {
+		fs.writeFile(__dirname + "/" + __dirname.split('/').slice(-1) + "_asound_patch.sh", cmd, 'utf8', function (err) {
 			if (err)
 			{
 				self.commandRouter.pushConsoleMessage('Could not write the script with error: ' + err);
@@ -412,7 +412,7 @@ snapserver.prototype.createAsoundConfig = function(replacements)
 	var self = this;
 	var defer = libQ.defer();
 	
-	fs.readFile(__dirname + "/templates/asound." + __dirname.split('/').slice(-1)), 'utf8', function (err, data) {
+	fs.readFile(__dirname + "/templates/asound." + __dirname.split('/').slice(-1), 'utf8', function (err, data) {
 		if (err) {
 			defer.reject(new Error(err));
 		}

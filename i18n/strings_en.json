@@ -65,12 +65,12 @@
 		"ENABLE_FIFO_MPD":"FIFO output for MPD",
 		"D_ENABLE_FIFO_MPD":"When set to off, it disables direct output to FIFO from MPD.",
 		"DD_ENABLE_FIFO_MPD":"Used for synchronized playback",
-		"PATCH_SPOTIFY_CONF":"Patch Volumio Spotify configuration(s)",
-		"D_PATCH_SPOTIFY_CONF":"Enabling will patch all known Spotify config files. When turned off, synchronized playback is disabled for this service.",
-		"DD_PATCH_SPOTIFY_CONF":"Turn off to disable synchronized playback for this service",
-		"PATCH_AIRPLAY_CONF":"Patch AirPlay configuration",
-		"D_PATCH_AIRPLAY_CONF":"Patch the AirPlay (Shairport-sync) config files. When turned off, synchronized playback is disabled for this service`.",
-		"DD_PATCH_AIRPLAY_CONF":"Turn off to disable synchronized playback for this service",	
+		"ENABLE_SPOTIFY_SVC":"En- or Disable Spotify integration(s)",
+		"D_ENABLE_SPOTIFY_SVC":"Enabling will patch all known Spotify config files. When turned off, synchronized playback is disabled for this service.",
+		"DD_ENABLE_SPOTIFY_SVC":"Turn off to disable synchronized playback for this service",
+		"ENABLE_AIRPLAY_SVC":"En- or Disable AirPlay integration",
+		"D_ENABLE_AIRPLAY_SVC":"Patch the AirPlay (Shairport-sync) config files. When turned off, synchronized playback is disabled for this service`.",
+		"DD_ENABLE_AIRPLAY_SVC":"Turn off to disable synchronized playback for this service",	
 	"SAVE": "Save"
 	}
 }

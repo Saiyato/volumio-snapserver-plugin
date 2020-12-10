@@ -17,7 +17,7 @@
   },
   "main_stream_codec": {
     "type": "string",
-    "value": "2"
+    "value": "flac"
   },
   "enable_secondary_stream": {
     "type": "boolean",
@@ -41,7 +41,7 @@
   },
   "secondary_stream_codec": {
     "type": "string",
-    "value": "2"
+    "value": "flac"
   },
   "enable_debug_logging": {
     "type": "boolean",
