@@ -1,0 +1,12 @@
+[Unit]
+Description=Copies the asound configuration file (back) to /etc/ for use with SnapServer
+
+[Service]
+User=root
+ExecStart=/bin/sh -c "cp /data/plugins/audio_interface/snapserver/templates/asound.conf /etc/asound.conf && chown root:root /etc/asound.conf && chmod 644 /etc/asound.conf && alsactl -L -R restore"
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=snap-activator
+
+[Install]
+WantedBy=multi-user.target

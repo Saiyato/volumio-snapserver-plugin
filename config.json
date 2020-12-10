@@ -1,0 +1,82 @@
+{
+  "main_stream_name": {
+    "type": "string",
+    "value": "Volumio_Main_Stream"
+  },    
+  "main_stream_sample_rate": {
+    "type": "string",
+    "value": "44100"
+  },
+  "main_stream_bit_depth": {
+    "type": "string",
+    "value": "16" 
+  },
+  "main_stream_channels": {
+    "type": "string",
+    "value": "2"
+  },
+  "main_stream_codec": {
+    "type": "string",
+    "value": "2"
+  },
+  "enable_secondary_stream": {
+    "type": "boolean",
+    "value": true
+  },
+  "secondary_stream_name": {
+    "type": "string",
+    "value": "Volumio_Secondary_Stream"
+  },    
+  "secondary_stream_sample_rate": {
+    "type": "string",
+    "value": "44100"
+  },
+  "secondary_stream_bit_depth": {
+    "type": "string",
+    "value": "16" 
+  },
+  "secondary_stream_channels": {
+    "type": "string",
+    "value": "2"
+  },
+  "secondary_stream_codec": {
+    "type": "string",
+    "value": "2"
+  },
+  "enable_debug_logging": {
+    "type": "boolean",
+    "value": false
+  },  
+  "patch_mpd_conf": {
+    "type": "boolean",
+    "value": true
+  },
+  "mpd_sample_rate": {
+    "type": "string",
+    "value": "44100"
+  },
+  "mpd_bit_depth": {
+    "type": "string",
+    "value": "16" 
+  },
+  "mpd_channels": {
+    "type": "string",
+    "value": "2"
+  },
+  "enable_alsa_mpd": {
+    "type": "boolean",
+    "value": false
+  },
+  "enable_fifo_mpd": {
+    "type": "boolean",
+    "value": true
+  },  
+  "enable_spotify_service": {
+    "type": "boolean",
+    "value": false
+  },
+  "enable_airplay_service": {
+    "type": "boolean",
+    "value": false
+  }
+}

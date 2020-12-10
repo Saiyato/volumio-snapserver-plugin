@@ -1,0 +1,386 @@
+{
+	"page": {
+		"label": "TRANSLATE.SNAPSERVER.SNAPSERVERCONF"
+	},
+	"sections": [{
+		"id": "section_general",
+		"element": "section",
+		"label": "TRANSLATE.SNAPSERVER.GENERAL",
+		"doc": "TRANSLATE.SNAPSERVER.D_GENERAL",
+		"description": "TRANSLATE.SNAPSERVER.DD_GENERAL",
+		"icon": "fa-server",
+		"onSave": {
+			"type": "controller",
+			"endpoint": "audio_interface/snapserver",
+			"method": "updateServerConfig"
+		},
+		"saveButton": {
+			"label": "TRANSLATE.SNAPSERVER.SAVE",
+			"data": ["main_stream_name",
+			"enable_main_stream_expert_settings",
+			"main_stream_sample_rate",
+			"main_stream_bit_depth",
+			"main_stream_channels",
+			"main_stream_codec",
+			"enable_secondary_stream",
+			"secondary_stream_name",
+			"enable_secondary_stream_expert_settings",
+			"secondary_stream_sample_rate",
+			"secondary_stream_bit_depth",
+			"secondary_stream_channels",
+			"secondary_stream_codec",
+			"enable_debug_logging"]
+		},
+		"content": [{
+			"id": "main_stream_name",
+			"element": "input",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_MAIN_STREAM_NAME",
+			"description": "TRANSLATE.SNAPSERVER.DD_MAIN_STREAM_NAME",
+			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_NAME",
+			"value": "Volumio_Main_Stream"
+		},
+		{
+			"id": "enable_main_stream_expert_settings",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_EXPERT_SETTINGS",
+			"description": "TRANSLATE.SNAPSERVER.DD_EXPERT_SETTING",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_MAIN_STREAM_EXPERT_SETTINGS",
+			"value": false
+		},
+		{
+			"id": "main_stream_sample_rate",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_SAMPLE_RATE",
+			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_SAMPLE_RATE",
+			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_SAMPLE_RATE",
+			"value": {
+				"value": 44100,
+				"label": "44100Hz"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "enable_main_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "main_stream_bit_depth",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_BIT_DEPTH",
+			"description": "TRANSLATE.SNAPSERVER.DD_BIT_DEPTH",
+			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_BIT_DEPTH",
+			"value": {
+				"value": 16,
+				"label": "16 bits"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "enable_main_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "main_stream_channels",
+			"element": "input",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CHANNELS",
+			"description": "TRANSLATE.SNAPSERVER.DD_CHANNELS",
+			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_CHANNELS",
+			"value": "2",
+			"visibleIf": {
+				"field": "enable_main_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "main_stream_codec",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CODEC",
+			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_CODEC",
+			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_CODEC",
+			"value": {
+				"value": "flac",
+				"label": "Flac (lossless compressed)"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "enable_main_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "enable_secondary_stream",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_SECONDARY_STREAM",
+			"description": "TRANSLATE.SNAPSERVER.DD_ENABLE_SECONDARY_STREAM",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_SECONDARY_STREAM",
+			"value": false
+		},
+		{
+			"id": "secondary_stream_name",			
+			"element": "input",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_SECONDARY_STREAM_NAME",
+			"description": "TRANSLATE.SNAPSERVER.DD_SECONDARY_STREAM_NAME",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_NAME",
+			"value": "Volumio_Secondary_Stream",
+			"visibleIf": {
+				"field": "enable_secondary_stream",
+				"value": true
+			}
+		},
+		{
+			"id": "enable_secondary_stream_expert_settings",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_EXPERT_SETTINGS",
+			"description": "TRANSLATE.SNAPSERVER.DD_EXPERT_SETTING",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_SECONDARY_STREAM_EXPERT_SETTINGS",
+			"value": false,
+			"visibleIf": {
+				"field": "enable_secondary_stream",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_sample_rate",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_SAMPLE_RATE",
+			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_SAMPLE_RATE",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_SAMPLE_RATE",
+			"value": {
+				"value": 44100,
+				"label": "44100Hz"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_bit_depth",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_BIT_DEPTH",
+			"description": "TRANSLATE.SNAPSERVER.DD_BIT_DEPTH",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_BIT_DEPTH",
+			"value": {
+				"value": 16,
+				"label": "16 bits"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_channels",
+			"element": "input",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CHANNELS",
+			"description": "TRANSLATE.SNAPSERVER.DD_CHANNELS",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_CHANNELS",
+			"value": "2",
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_codec",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CODEC",
+			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_CODEC",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_CODEC",
+			"value": {
+				"value": "flac",
+				"label": "Flac (lossless compressed)"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "enable_debug_logging",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_DEBUG_LOGGING",
+			"description": "TRANSLATE.SNAPSERVER.DD_ENABLE_DEBUG_LOGGING",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_DEBUG_LOGGING",
+			"value": false
+		}]
+	},
+	{
+		"id": "section_showPlayers",
+		"element": "section",
+		"label": "TRANSLATE.SNAPSERVER.AUDIOPLAYERS",
+		"icon": "fa-cogs",
+		"content": [{
+			"id": "show_mpd",
+			"element": "switch",
+			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
+			"label": "TRANSLATE.SNAPSERVER.SHOW_MPD",
+			"value": false
+		},
+		{
+			"id": "show_spotify",
+			"element": "switch",
+			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
+			"label": "TRANSLATE.SNAPSERVER.SHOW_SPOTIFY",
+			"value": false
+		},
+		{
+			"id": "show_airplay",
+			"element": "switch",
+			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
+			"label": "TRANSLATE.SNAPSERVER.SHOW_AIRPLAY",
+			"enabled": false,
+			"value": false
+		},
+		{
+			"id": "show_player_configs",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_SHOW_PLAYER_CONFIGS",
+			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER_CONFIGS",
+			"label": "TRANSLATE.SNAPSERVER.SHOW_PLAYER_CONFIGS",
+			"value": false
+		}]
+	},
+	{
+		"id": "section_modify_players",
+		"element": "section",
+		"label": "TRANSLATE.SNAPSERVER.AUDIOPLAYER_CONFIGS",
+		"description": "TRANSLATE.SNAPSERVER.D_AUDIOPLAYER_CONFIGS",
+		"icon": "fa-play",
+		"visibleIf": {
+				"field": "show_player_configs",
+				"value": true
+			},
+		"onSave": {
+			"type": "controller",
+			"endpoint": "audio_interface/snapserver",
+			"method": "updatePlayerConfigs"
+		},
+		"saveButton": {
+			"label": "TRANSLATE.SNAPSERVER.SAVE",
+			"data": ["patch_mpd_conf",
+			"expose_mpd_expert_settings",
+			"mpd_sample_rate",
+			"mpd_bit_depth",
+			"mpd_channels",
+			"enable_alsa_mpd",
+			"enable_fifo_mpd",
+			"patch_spotify_conf",
+			"patch_airplay_conf"]
+		},
+		"content": [{
+			"id": "patch_mpd_conf",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_PATCH_MPD_CONF",
+			"description": "TRANSLATE.SNAPSERVER.DD_PATCH_MPD_CONF",
+			"label": "TRANSLATE.SNAPSERVER.PATCH_MPD_CONF",
+			"value": true
+		},
+		{
+			"id": "expose_mpd_expert_settings",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_EXPOSE_EXPERT_SETTINGS",
+			"description": "TRANSLATE.SNAPSERVER.DD_EXPOSE_EXPERT_SETTINGS",
+			"label": "TRANSLATE.SNAPSERVER.EXPOSE_EXPERT_PLAYER_SETTINGS",
+			"value": false
+		},
+		{
+			"id": "mpd_sample_rate",
+			"element": "select",
+			"doc": "TRANSLATE.SNAPSERVER.D_MPD_SAMPLE_RATE",
+			"description": "TRANSLATE.SNAPSERVER.DD_MPD_SAMPLE_RATE",
+			"label": "TRANSLATE.SNAPSERVER.MPD_SAMPLE_RATE",
+			"value": {
+				"value": 44100,
+				"label": "44100Hz"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "expose_mpd_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "mpd_bit_depth",
+			"element": "select",
+			"doc": "TRANSLATE.SNAPSERVER.D_MPD_BIT_DEPTH",
+			"description": "TRANSLATE.SNAPSERVER.DD_MPD_BIT_DEPTH",
+			"label": "TRANSLATE.SNAPSERVER.MPD_BIT_DEPTH",
+			"value": {
+				"value": 16,
+				"label": "16 bits"
+			},
+			"options": [],
+			"visibleIf": {
+				"field": "expose_mpd_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "mpd_channels",
+			"type": "text",
+			"element": "input",
+			"doc": "TRANSLATE.SNAPSERVER.D_MPD_CHANNELS",
+			"description": "TRANSLATE.SNAPSERVER.DD_CHANNELS",
+			"label": "TRANSLATE.SNAPSERVER.MPD_CHANNELS",
+			"value": "2",
+			"visibleIf": {
+				"field": "expose_mpd_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "enable_alsa_mpd",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_ALSA_MPD",
+			"description": "TRANSLATE.SNAPSERVER.DD_ENABLE_ALSA_MPD",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_ALSA_MPD",
+			"value": false,
+			"visibleIf": {
+				"field": "expose_mpd_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "enable_fifo_mpd",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_FIFO_MPD",
+			"description": "TRANSLATE.SNAPSERVER.DD_ENABLE_FIFO_MPD",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_FIFO_MPD",
+			"value": true,
+			"visibleIf": {
+				"field": "expose_mpd_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "patch_spotify_conf",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_PATCH_SPOTIFY_CONF",
+			"description": "TRANSLATE.SNAPSERVER.DD_PATCH_SPOTIFY_CONF",
+			"label": "TRANSLATE.SNAPSERVER.PATCH_SPOTIFY_CONF",
+			"value": true
+		},
+		{
+			"id": "patch_airplay_conf",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_PATCH_AIRPLAY_CONF",
+			"description": "TRANSLATE.SNAPSERVER.DD_PATCH_AIRPLAY_CONF",
+			"label": "TRANSLATE.SNAPSERVER.PATCH_AIRPLAY_CONF",
+			"value": true
+		}]
+	}]
+}
