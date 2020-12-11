@@ -31,9 +31,16 @@ snapserver.prototype.onStart = function() {
     var self = this;
 	var defer=libQ.defer();
 
-
-	// Once the Plugin has successfull started resolve the promise
-	defer.resolve();
+	if(self.config.get('debug_logging'))
+		console.log('[SnapServer] config: ' + JSON.stringify(self.config));
+	
+	self.restartService(true)
+	.fail(function(e)
+	{
+		self.commandRouter.pushToastMessage('error', "Startup failed", "Could not start the SnapCast plugin in a fashionable manner.");
+		self.logger.error("Could not start the SnapCast plugin in a fashionable manner. Error: " + e);
+		defer.reject(new error(e));
+	});
 
     return defer.promise;
 };
@@ -42,8 +49,11 @@ snapserver.prototype.onStop = function() {
     var self = this;
     var defer=libQ.defer();
 
-    // Once the Plugin has successfull stopped resolve the promise
-    defer.resolve();
+    self.stopService()
+	.fail(function(e)
+	{
+		defer.reject(new error());
+	});
 
     return libQ.resolve();
 };
@@ -59,120 +69,112 @@ snapserver.prototype.onRestart = function() {
 snapserver.prototype.getUIConfig = function() {
     var defer = libQ.defer();
     var self = this;
-
-	var ratesdata = fs.readJsonSync((__dirname + '/options/sample_rates.json'),  'utf8', {throws: false});
-	var bitdephtdata = fs.readJsonSync((__dirname +'/options/bit_depths.json'),  'utf8', {throws: false});
-	var codecdata = fs.readJsonSync((__dirname + '/options/codecs.json'),  'utf8', {throws: false});
+	if(self.config.get('debug_logging'))
+		console.log('[SnapServer] config: ' + JSON.stringify(self.config));
+		
+	var codecs = [
+	{
+		"name": "Flac (lossless compressed)",
+		"rate": "flac"
+	},
+	{
+		"name": "PCM (lossless uncompressed)",
+		"rate": "pcm"
+	},
+	{
+		"name": "OGG Vorbis (lossy compressed)",
+		"rate": "ogg"
+	}];
+	
+	var streams = [
+	{
+		"id": "1",
+		"name": "main",
+		"pipe": "/tmp/snapfifo"
+	},
+	{
+		"id": "2",
+		"name": "secondary",		
+		"pipe": "/tmp/snapfifo2"
+	}];
 	
     var lang_code = this.commandRouter.sharedVars.get('language_code');
+	console.log('#################################### Loading configs');
 
     self.commandRouter.i18nJson(__dirname+'/i18n/strings_'+lang_code+'.json',
         __dirname+'/i18n/strings_en.json',
         __dirname + '/UIConfig.json')
-		.then(function(evaluate)
-		{
-			console.log('$$$ Evaluating settings');
-			// Verify configs			
-			defer.resolve(evaluate);
-		})
         .then(function(uiconf)
         {
-			console.log('$$$ Populating settings form');
-			
 			// Main stream
 			uiconf.sections[0].content[0].value = self.config.get('main_stream_name');
-			for (var n = 0; n < ratesdata.sample_rates.length; n++){
-				self.configManager.pushUIConfigParam(uiconf, 'sections[0].content[1].options', {
-					value: ratesdata.sample_rates[n].rate,
-					label: ratesdata.sample_rates[n].name
-				});
-				
-				if(ratesdata.sample_rates[n].rate == parseInt(self.config.get('main_stream_sample_rate')))
-				{
-					uiconf.sections[0].content[1].value.value = ratesdata.sample_rates[n].rate;
-					uiconf.sections[0].content[1].value.label = ratesdata.sample_rates[n].name;
-				}
-			}
-			for (var n = 0; n < bitdephtdata.bit_depths.length; n++){
-				self.configManager.pushUIConfigParam(uiconf, 'sections[0].content[2].options', {
-					value: bitdephtdata.bit_depths[n].bits,
-					label: bitdephtdata.bit_depths[n].name
-				});
-				
-				if(bitdephtdata.bit_depths[n].bits == parseInt(self.config.get('main_stream_bit_depth')))
-				{
-					uiconf.sections[0].content[2].value.value = bitdephtdata.bit_depths[n].bits;
-					uiconf.sections[0].content[2].value.label = bitdephtdata.bit_depths[n].name;
-				}
-			}
-			uiconf.sections[0].content[3].value = self.config.get('main_stream_channels');
-			for (var n = 0; n < codecdata.codecs.length; n++){
-				self.configManager.pushUIConfigParam(uiconf, 'sections[0].content[4].options', {
-					value: codecdata.codecs[n].extension,
-					label: codecdata.codecs[n].name
-				});
-				
-				if(codecdata.codecs[n].extension == self.config.get('main_stream_codec'))
-				{
-					uiconf.sections[0].content[4].value.value = codecdata.codecs[n].extension;
-					uiconf.sections[0].content[4].value.label = codecdata.codecs[n].name;
-				}
-			}
+			// 1 = expert settings			
+			uiconf.sections[0].content[2].value.value = self.config.get('main_stream_sample_rate');
+			uiconf.sections[0].content[2].value.label = self.config.get('main_stream_sample_rate') + 'Hz';
+			uiconf.sections[0].content[3].value.value = self.config.get('main_stream_bit_depth');
+			uiconf.sections[0].content[3].value.label = self.config.get('main_stream_bit_depth') + ' bits';
+			uiconf.sections[0].content[4].value = self.config.get('main_stream_channels');
+			uiconf.sections[0].content[5].value.value = self.config.get('main_stream_codec');
+			uiconf.sections[0].content[5].value.label = codecs.find(c => c.rate == [self.config.get('main_stream_codec')]).name;
 			
 			// Secondary stream
-			uiconf.sections[0].content[5].value = self.config.get('enable_secondary_stream');
-			uiconf.sections[0].content[6].value = self.config.get('secondary_stream_name');
-			for (var n = 0; n < ratesdata.sample_rates.length; n++){
-				self.configManager.pushUIConfigParam(uiconf, 'sections[0].content[7].options', {
-					value: ratesdata.sample_rates[n].rate,
-					label: ratesdata.sample_rates[n].name
-				});
-				
-				if(ratesdata.sample_rates[n].rate == parseInt(self.config.get('secondary_stream_sample_rate')))
-				{
-					uiconf.sections[0].content[7].value.value = ratesdata.sample_rates[n].rate;
-					uiconf.sections[0].content[7].value.label = ratesdata.sample_rates[n].name;
-				}
-			}
-			for (var n = 0; n < bitdephtdata.bit_depths.length; n++){
-				self.configManager.pushUIConfigParam(uiconf, 'sections[0].content[8].options', {
-					value: bitdephtdata.bit_depths[n].bits,
-					label: bitdephtdata.bit_depths[n].name
-				});
-				
-				if(bitdephtdata.bit_depths[n].bits == parseInt(self.config.get('secondary_stream_bit_depth')))
-				{
-					uiconf.sections[0].content[8].value.value = bitdephtdata.bit_depths[n].bits;
-					uiconf.sections[0].content[8].value.label = bitdephtdata.bit_depths[n].name;
-				}
-			}
-			uiconf.sections[0].content[9].value = self.config.get('secondary_stream_channels');
-			for (var n = 0; n < codecdata.codecs.length; n++){
-				self.configManager.pushUIConfigParam(uiconf, 'sections[0].content[10].options', {
-					value: codecdata.codecs[n].extension,
-					label: codecdata.codecs[n].name
-				});
-				
-				if(codecdata.codecs[n].extension == self.config.get('secondary_stream_codec'))
-				{
-					uiconf.sections[0].content[10].value.value = codecdata.codecs[n].extension;
-					uiconf.sections[0].content[10].value.label = codecdata.codecs[n].name;
-				}
-			}
-			uiconf.sections[0].content[9].value = self.config.get('enable_debug_logging');
-			self.logger.info("1/3 setting groups loaded");
+			uiconf.sections[0].content[6].value = self.config.get('enable_secondary_stream');
+			uiconf.sections[0].content[7].value = self.config.get('secondary_stream_name');
+			// 8 = expert settings
+			uiconf.sections[0].content[9].value.value = self.config.get('secondary_stream_sample_rate');
+			uiconf.sections[0].content[9].value.label = self.config.get('secondary_stream_sample_rate') + 'Hz';
+			uiconf.sections[0].content[10].value.value = self.config.get('secondary_stream_bit_depth');
+			uiconf.sections[0].content[10].value.label = self.config.get('secondary_stream_bit_depth') + ' bits'
+			uiconf.sections[0].content[11].value = self.config.get('secondary_stream_channels');
+			uiconf.sections[0].content[12].value.value = self.config.get('secondary_stream_codec');
+			uiconf.sections[0].content[12].value.label = codecs.find(c => c.rate == [self.config.get('secondary_stream_codec')]).name;
+			uiconf.sections[0].content[13].value = self.config.get('enable_debug_logging');
+			self.logger.info("1/3 setting groups loaded");	
 			
 			// Show players
-			if(execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2)") == "no")
-				uiconf.sections[1].content[0] = false;
-			else
-				uiconf.sections[1].content[0] = true;
+			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2)");
+			mpd == "no" ? uiconf.sections[1].content[0].value = false: uiconf.sections[1].content[0].value = true;
 			
-
+			let volspotconnect2 = execSync("cat /data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl | grep -q pipe; echo $?");
+			volspotconnect2 == "1" ? uiconf.sections[1].content[1].value = false: uiconf.sections[1].content[1].value = true;
+			
+			let spop = execSync("cat /data/plugins/music_service/spop/spop.conf.tmpl | grep -q fifo; echo $?");
+			spop == "1" ? uiconf.sections[1].content[2].value = false: uiconf.sections[1].content[2].value = true;
+			
+			let shairport = execSync("cat /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl | grep -q ^pipe; echo $?");
+			shairport == "1" ? uiconf.sections[1].content[3].value = false: uiconf.sections[1].content[3].value = true;
+			
+			self.logger.info("2/3 setting groups loaded");
+			
+			// Show service settings
+			uiconf.sections[2].content[0].value = self.config.get('patch_mpd_conf');
+			// 1 = expert settings
+			uiconf.sections[2].content[2].value.value = self.config.get('mpd_sample_rate');
+			uiconf.sections[2].content[2].value.label  = self.config.get('mpd_sample_rate') + 'Hz';
+			uiconf.sections[2].content[3].value.value = self.config.get('mpd_bit_depth');
+			uiconf.sections[2].content[3].value.label = self.config.get('mpd_bit_depth') + ' bits';
+			uiconf.sections[2].content[4].value = self.config.get('mpd_channels');
+			uiconf.sections[2].content[5].value = self.config.get('enable_alsa_mpd');
+			uiconf.sections[2].content[6].value = self.config.get('enable_fifo_mpd');
+			uiconf.sections[2].content[7].value.value = self.config.get('mpd_stream');
+			uiconf.sections[2].content[7].value.label = streams.find(c => c.id == [self.config.get('mpd_stream')]).name;
+			uiconf.sections[2].content[8].value = self.config.get('enable_volspotconnect_service');
+			uiconf.sections[2].content[9].value.value = self.config.get('volspotconnect_stream');
+			uiconf.sections[2].content[9].value.label = streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).name;
+			uiconf.sections[2].content[10].value = self.config.get('enable_spop_service');
+			uiconf.sections[2].content[11].value.value = self.config.get('spop_stream');
+			uiconf.sections[2].content[11].value.label = streams.find(c => c.id == [self.config.get('spop_stream')]).name;
+			uiconf.sections[2].content[12].value = self.config.get('enable_airplay_service');
+			uiconf.sections[2].content[13].value.value = self.config.get('airplay_stream');
+			uiconf.sections[2].content[13].value.label = streams.find(c => c.id == [self.config.get('airplay_stream')]).name;
+			
+			self.logger.info("3/3 setting groups loaded");
+			
             defer.resolve(uiconf);
         })
-        .fail(function()
+        .fail(function(err)
         {
+			console.log('An error occurred: ' + err);
             defer.reject(new Error());
         });
 
@@ -200,39 +202,108 @@ snapserver.prototype.setConf = function(varName, varValue) {
 
 // Update Config Methods -----------------------------------------------------------------------------
 
-snapserver.prototype.updateServerConfig = function(newConfig) {
+snapserver.prototype.updateServerConfig = function(data) {
 	var self = this;
 	var defer = libQ.defer();
 	
 	// Always update snapserver config, there's no neat if-statement possible afaik; it also doesn't break anything (worst case is a playback hiccup of a few seconds)
+	self.config.set('main_stream_name', data['main_stream_name']);
+	self.config.set('main_stream_sample_rate', data['main_stream_sample_rate'].value);
+	self.config.set('main_stream_bit_depth', data['main_stream_bit_depth'].value);
+	self.config.set('main_stream_channels', data['main_stream_channels']);
+	self.config.set('main_stream_codec', data['main_stream_codec'].value);
+	self.config.set('enable_secondary_stream', data['enable_secondary_stream']);
+	self.config.set('secondary_stream_name', data['secondary_stream_name']);
+	self.config.set('secondary_stream_sample_rate', data['secondary_stream_sample_rate'].value);
+	self.config.set('secondary_stream_bit_depth', data['secondary_stream_bit_depth'].value);
+	self.config.set('secondary_stream_channels', data['secondary_stream_channels']);
+	self.config.set('secondary_stream_codec', data['secondary_stream_codec'].value);
+	self.config.set('enable_debug_logging', data['enable_debug_logging']);
+	
+	self.updateSnapServerConfig()
+	.then(function(restart){
+		self.restartService(false);
+	});
 	
 	return defer.promise;
 };
 
-snapserver.prototype.updatePlayerConfigs = function(newConfig) {
+snapserver.prototype.updateSnapServerConfig = function ()
+{
 	var self = this;
 	var defer = libQ.defer();
 	
-	if(newConfig['patch_mpd_conf'])
+	let m_stream = "-s pipe:///tmp/snapfifo?name=";
+	let s_stream = " -s pipe:///tmp/snapfifo2?name=";
+
+	m_stream = (self.config.get('main_stream_name') == undefined ? m_stream + 'Volumio' : m_stream + self.config.get('main_stream_name'));
+	s_stream = (self.config.get('secondary_stream_name') == undefined ? s_stream + 'Volumio2' : s_stream + self.config.get('secondary_stream_name'));
+	
+	m_stream = m_stream + '\\&mode=read';
+	s_stream = s_stream + '\\&mode=read';
+
+	let m_format = self.config.get('main_stream_sample_rate') + ':' + self.config.get('main_stream_bit_depth') + ':' + self.config.get('main_stream_channels');
+	let s_format = self.config.get('secondary_stream_sample_rate') + ':' + self.config.get('secondary_stream_bit_depth') + ':' + self.config.get('secondary_stream_channels');
+	m_format = (m_format == undefined || m_format == '48000:16:2' ? '' : '\\&sampleformat=' + m_format);
+	s_format = (s_format == undefined || m_format == '48000:16:2' ? '' : '\\&sampleformat=' + s_format);
+	
+	let m_codec = (self.config.get('main_stream_codec') == undefined || self.config.get('main_stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('main_stream_codec'));
+	let s_codec = (self.config.get('secondary_stream_codec') == undefined || self.config.get('secondary_stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('secondary_stream_codec'));
+
+	//var cli_commands = (self.config.get('server_cli') == undefined ? '' : self.config.get('server_cli'));
+
+	m_stream = m_stream + m_format + m_codec;
+	s_stream = s_stream + s_format + s_codec;
+		
+	var command = "/bin/sed -i -- 's|^SNAPSERVER_OPTS.*|SNAPSERVER_OPTS=\"-d " + m_stream + s_stream + "\"|g' /data/plugins/miscellanea/snapcast/default/snapserver";
+	
+	exec(command, {uid:1000, gid:1000}, function (error, stout, stderr) {
+		if(error)
+			console.log(stderr);
+		
+		defer.resolve();
+	});
+	
+	return defer.promise;
+};
+
+snapserver.prototype.updatePlayerConfigs = function(data) {
+	var self = this;
+	var defer = libQ.defer();
+	
+	if(data['patch_mpd_conf'])
 	{
 		self.config.set('patch_mpd_conf', data['patch_mpd_conf']);
-		self.config.set('mpd_sample_rate', data['mpd_sample_rate']);
-		self.config.set('mpd_bit_depth', data['mpd_bit_depth']);
+		self.config.set('mpd_sample_rate', data['mpd_sample_rate'].value);
+		self.config.set('mpd_bit_depth', data['mpd_bit_depth'].value);
 		self.config.set('mpd_channels', data['mpd_channels']);
 		self.config.set('enable_alsa_mpd', data['enable_alsa_mpd']);
 		self.config.set('enable_fifo_mpd', data['enable_fifo_mpd']);
+		self.config.set('mpd_stream', data['mpd_stream'].value);
 		self.updateMpdConfig();
 	}
-	if(newConfig['enable_spotify_service'])
-	{
-		self.config.set('enable_spotify_service', data['enable_spotify_service']);
-		self.updateSpotifyConfig();
+	self.config.set('enable_volspotconnect_service', data['enable_volspotconnect_service']);
+	self.config.set('volspotconnect_stream', data['volspotconnect_stream'].value);
+	self.config.set('enable_spop_service', data['enable_spop_service']);
+	self.config.set('spop_stream', data['spop_stream'].value);
+	self.updateSpotifyConfig(data['enable_volspotconnect_service'], data['enable_spop_service']);
+	self.config.set('enable_airplay_service', data['enable_airplay_service']);
+	self.config.set('airplay_stream', data['airplay_stream'].value);
+	self.updateShairportConfig(data['enable_airplay_service']);
+	
+	var responseData = {
+	title: 'Configuration required',
+	message: 'Changes have been made to the music services, you need to save the settings in, or restart the corresponding plugin again for the changes to take effect. In the case of changes to MPD, a restart is advised.',
+	size: 'lg',
+	buttons: [{
+				name: self.commandRouter.getI18nString('COMMON.CONTINUE'),
+				class: 'btn btn-info',
+				emit: '',
+				payload: ''
+			}
+		]
 	}
-	if(newConfig['enable_airplay_service'])
-	{
-		self.config.set('enable_spotify_service', data['enable_spotify_service']);
-		self.updateShairportConfig();
-	}
+	self.commandRouter.broadcastMessage("openModal", responseData);
 	
 	return defer.promise;
 };
@@ -279,51 +350,60 @@ snapserver.prototype.generateMpdUpdateScript = function()
 		});
 	});
 	
+	if(self.config.get('mpd_stream') == "1")
+		self.streamEdit("^path", "path\ \ \ \ \ \ \ \ \ \ \ \ \"/tmp/snapfifo\"", "/etc/mpd.conf", false);
+	else
+		self.streamEdit("^path", "path\ \ \ \ \ \ \ \ \ \ \ \ \"/tmp/snapfifo2\"", "/etc/mpd.conf", false);
+		
+	
 	return defer.promise;
 };
 
-snapserver.prototype.updateShairportConfig = function() {
+snapserver.prototype.updateShairportConfig = function(enable) {
 	var self = this;
+
+	if (enable === true)
+	{
+		self.streamEdit("alsa", "pipe", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+		self.streamEdit("output_device", "name = \"/tmp/" +  streams.find(c => c.id == [self.config.get('airplay_stream')]).pipe + "\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+	}
+	else
+	{
+		self.streamEdit("pipe", "alsa", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+		self.streamEdit("alsa", "output_device = \"${device}\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+	}
 	
 	return true;
 };
 
-snapserver.prototype.updateSpotifyConfig = function() {
+snapserver.prototype.updateSpotifyConfig = function(volspotconnect2, spop) {
 	var self = this;
 	var defer = libQ.defer();
 	
-	if(self.get.config('enable_spotify_service'))
+	if(volspotconnect2 === true)
+	{
+		// Legacy implementation
+		self.streamEdit("--device ${outdev}", "--backend pipe --device /tmp/" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + " ${normalvolume} \\\\", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
+		// New implementation > TOML
+		self.streamEdit("device", "device = \\x27/tmp/" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + "\\x27 --backend pipe", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+	}
+	else	
+	{
+		self.streamEdit("--backend", "--device ${outdev}", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
+		self.streamEdit("device", "device = '${outdev}'", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+	}
+	
+	if(spop === true)
 	{
 		// Spop
 		self.streamEdit("alsa", "raw", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
-		self.streamEdit("${outdev}", "/tmp/snapfifo", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
-		// Legacy implementation
-		self.streamEdit("--device ${outdev}", "--backend pipe --device /tmp/snapfifo ${normalvolume} \\\\", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
-		// New implementation > TOML
-		self.streamEdit("device", "device = \\x27/tmp/snapfifo\\x27 --backend pipe", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("${outdev}", "/tmp/" +  streams.find(c => c.id == [self.config.get('spop_stream')]).pipe, "/data/plugins/music_service/spop/spop.conf.tmpl", false);
 	}
 	else
 	{
 		self.streamEdit("raw", "alsa", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
-		self.streamEdit("/tmp/snapfifo", "${outdev}", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
-		self.streamEdit("--backend pipe --device /tmp/snapfifo ${normalvolume} \\\\", "--device ${outdev}", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
-		self.streamEdit("device", "--device ${outdev} ${normalvolume}  \\", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("/tmp/" +  streams.find(c => c.id == [self.config.get('spop_stream')]).pipe, "${outdev}", "/data/plugins/music_service/spop/spop.conf.tmpl", false);		
 	}
-	
-	var responseData = {
-	title: 'Configuration required',
-	message: 'Changes have been made to the Spotify implementation template, you need to save the settings in, or restart the corresponding plugin again for the changes to take effect.',
-	size: 'lg',
-	buttons: [{
-				name: self.commandRouter.getI18nString('COMMON.CONTINUE'),
-				class: 'btn btn-info',
-				emit: '',
-				payload: ''
-			}
-		]
-	}
-
-	self.commandRouter.broadcastMessage("openModal", responseData);
 
 	return defer.promise;
 };
@@ -498,4 +578,53 @@ snapserver.prototype.isValidJSON = function (str)
         return false;
     }
     return true;
+};
+
+
+// Service Control -----------------------------------------------------------------------------------
+
+snapserver.prototype.restartService = function (boot)
+{
+	var self = this;
+	var defer=libQ.defer();
+
+	var command = "/usr/bin/sudo /bin/systemctl restart snapserver";		
+	exec(command, {uid:1000,gid:1000}, function (error, stdout, stderr) {
+		if (error !== null) {
+			self.commandRouter.pushConsoleMessage('The following error occurred while starting SnapServer: ' + error);
+			self.commandRouter.pushToastMessage('error', "Restart failed", "Restarting SnapServer failed with error: " + error);
+			defer.reject();
+		}
+		else {
+			self.commandRouter.pushConsoleMessage('SnapServer started');
+			if(boot == false)
+				self.commandRouter.pushToastMessage('success', "Restarted SnapServer", "Restarted SnapServer for the changes to take effect.");
+			
+			defer.resolve();
+		}
+	});
+
+	return defer.promise;
+};
+
+snapserver.prototype.stopService = function ()
+{
+	var self = this;
+	var defer=libQ.defer();
+
+	var command = "/usr/bin/sudo /bin/systemctl stop SnapServer";
+	exec(command, {uid:1000,gid:1000}, function (error, stdout, stderr) {
+		if (error !== null) {
+			self.commandRouter.pushConsoleMessage('The following error occurred while stopping SnapServer: ' + error);
+			self.commandRouter.pushToastMessage('error', "Stopping service failed", "Stopping SnapServer failed with error: " + error);
+			defer.reject();
+		}
+		else {
+			self.commandRouter.pushConsoleMessage('SnapServer stopped');
+			self.commandRouter.pushToastMessage('success', "Stopping", "Stopped SnapServer.");
+			defer.resolve();
+		}
+	});
+
+	return defer.promise;
 };

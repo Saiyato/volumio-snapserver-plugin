@@ -1,7 +1,7 @@
 {
   "main_stream_name": {
     "type": "string",
-    "value": "Volumio_Main_Stream"
+    "value": "VolumioMain"
   },    
   "main_stream_sample_rate": {
     "type": "string",
@@ -21,11 +21,11 @@
   },
   "enable_secondary_stream": {
     "type": "boolean",
-    "value": true
+    "value": false
   },
   "secondary_stream_name": {
     "type": "string",
-    "value": "Volumio_Secondary_Stream"
+    "value": "Volumio2"
   },    
   "secondary_stream_sample_rate": {
     "type": "string",
@@ -70,13 +70,34 @@
   "enable_fifo_mpd": {
     "type": "boolean",
     "value": true
+  }, 
+  "mpd_stream": {
+    "type": "string",
+    "value": "1"
   },  
-  "enable_spotify_service": {
+  "enable_volspotconnect_service": {
     "type": "boolean",
     "value": false
+  },
+  "volspotconnect_stream": {
+    "type": "string",
+    "value": 1
+  },
+  "enable_spop_service": {
+    "type": "boolean",
+    "value": false
+  },
+  "spop_stream": {
+    "type": "string",
+    "value": 1
   },
   "enable_airplay_service": {
     "type": "boolean",
     "value": false
+  }
+  ,
+  "airplay_stream": {
+    "type": "string",
+    "value": 1
   }
 }
