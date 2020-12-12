@@ -70,10 +70,10 @@ if [ ! -f $INSTALLING ]; then
 	 *) sed -i -- 's|.*type.*alsa.*|&\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ enabled\ \ \ \ \ \ \ \ \ "no"|g' /etc/mpd.conf ;;
 	esac
 		
-	# Edit the systemd unit to create a new fifo pipe
-	#systemctl enable /data/plugins/audio_interface/snapserver/unit/spotififo.service
-	#systemctl start spotififo.service
-	#systemctl disable snapserver.service
+	# Edit the systemd unit to create fifo pipes
+	systemctl enable /data/plugins/audio_interface/snapserver/unit/secondary-fifo.service
+	systemctl start secondary-fifo.service
+	systemctl disable snapserver.service
 	
 	# The new way of patching root-owned files from within plugins
 	#systemctl enable /data/plugins/audio_interface/snapserver/unit/snap-activator.service

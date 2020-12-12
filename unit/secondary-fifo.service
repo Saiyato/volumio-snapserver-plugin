@@ -1,0 +1,13 @@
+[Unit]
+Description=Creates fifo buffers for SnapServer
+Before=snapserver.service mpd.service
+
+[Service]
+User=volumio
+ExecStart=/bin/sh -c "rm -f /tmp/snapfifo /tmp/snapfifo2 && mkfifo /tmp/snapfifo /tmp/snapfifo2 && chmod 664 /tmp/snapfifo /tmp/snapfifo2 && chgrp audio /tmp/snapfifo /tmp/snapfifo2"
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=fifocreator
+
+[Install]
+WantedBy=multi-user.target

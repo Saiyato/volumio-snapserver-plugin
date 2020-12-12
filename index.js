@@ -132,17 +132,21 @@ snapserver.prototype.getUIConfig = function() {
 			self.logger.info("1/3 setting groups loaded");	
 			
 			// Show players
-			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2)");
-			mpd == "no" ? uiconf.sections[1].content[0].value = false: uiconf.sections[1].content[0].value = true;
+			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2) | grep -q yes; echo $?");
+			uiconf.sections[1].content[0].value = (mpd == 1 ? false : true);
+			if(self.config.get('enable_debug_logging')) { console.log('mpd: ' + mpd); }
 			
 			let volspotconnect2 = execSync("cat /data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl | grep -q pipe; echo $?");
-			volspotconnect2 == "1" ? uiconf.sections[1].content[1].value = false: uiconf.sections[1].content[1].value = true;
+			uiconf.sections[1].content[1].value = (volspotconnect2 == 1 ? false : true);
+			if(self.config.get('enable_debug_logging')) { console.log('volspotconnect2: ' + volspotconnect2); }
 			
 			let spop = execSync("cat /data/plugins/music_service/spop/spop.conf.tmpl | grep -q fifo; echo $?");
-			spop == "1" ? uiconf.sections[1].content[2].value = false: uiconf.sections[1].content[2].value = true;
+			uiconf.sections[1].content[2].value = (spop == 1 ? false : true);
+			if(self.config.get('enable_debug_logging')) { console.log('spop: ' + spop); }
 			
 			let shairport = execSync("cat /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl | grep -q ^pipe; echo $?");
-			shairport == "1" ? uiconf.sections[1].content[3].value = false: uiconf.sections[1].content[3].value = true;
+			uiconf.sections[1].content[3].value = (shairport == 1 ? false : true);
+			if(self.config.get('enable_debug_logging')) { console.log('airplay: ' + shairport); }
 			
 			self.logger.info("2/3 setting groups loaded");
 			
@@ -254,8 +258,11 @@ snapserver.prototype.updateSnapServerConfig = function ()
 
 	m_stream = m_stream + m_format + m_codec;
 	s_stream = s_stream + s_format + s_codec;
+			
+	if(self.config.get('enable_debug_logging')) { console.log('main: ' + m_stream); }
+	if(self.config.get('enable_debug_logging')) { console.log('secondary: ' + s_stream); }
 		
-	var command = "/bin/sed -i -- 's|^SNAPSERVER_OPTS.*|SNAPSERVER_OPTS=\"-d " + m_stream + s_stream + "\"|g' /data/plugins/miscellanea/snapcast/default/snapserver";
+	var command = "/bin/sed -i -- 's|^SNAPSERVER_OPTS.*|SNAPSERVER_OPTS=\"-d " + m_stream + s_stream + "\"|g' /data/plugins/audio_interface/snapserver/default/snapserver";
 	
 	exec(command, {uid:1000, gid:1000}, function (error, stout, stderr) {
 		if(error)
