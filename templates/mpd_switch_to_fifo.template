@@ -13,5 +13,3 @@ case $FIFO_ENABLED in
 esac
 
 sed -i -- 's/.*format.*/\ \ \ \ format\ \ \ \ \ \ \ \ \ \ "${SAMPLE_RATE}:${BIT_DEPTH}:${CHANNELS}"/g' /etc/mpd.conf
-
-systemctl restart mpd

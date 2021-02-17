@@ -36,6 +36,7 @@
 			"doc": "TRANSLATE.SNAPSERVER.D_MAIN_STREAM_NAME",
 			"description": "TRANSLATE.SNAPSERVER.DD_MAIN_STREAM_NAME",
 			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_NAME",
+			"isDisabled": true,
 			"value": "Volumio_Main_Stream"
 		},
 		{
@@ -262,6 +263,7 @@
 		"id": "section_showPlayers",
 		"element": "section",
 		"label": "TRANSLATE.SNAPSERVER.AUDIOPLAYERS",
+		"description": "TRANSLATE.SNAPSERVER.D_AUDIOPLAYERS",
 		"icon": "fa-play",
 		"content": [{
 			"id": "show_mpd",
@@ -305,7 +307,7 @@
 			"method": "updatePlayerConfigs"
 		},
 		"saveButton": {
-			"label": "TRANSLATE.SNAPSERVER.SAVE",
+			"label": "TRANSLATE.SNAPSERVER.PATCH",
 			"data": ["patch_mpd_conf",
 			"expose_mpd_expert_settings",
 			"mpd_sample_rate",

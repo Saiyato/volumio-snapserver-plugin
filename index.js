@@ -1,10 +1,22 @@
 'use strict';
 
 var libQ = require('kew');
-var fs=require('fs-extra');
+var fs = require('fs-extra');
 var config = new (require('v-conf'))();
 var exec = require('child_process').exec;
 var execSync = require('child_process').execSync;
+
+var streams = [
+{
+	"id": "1",
+	"name": "main",
+	"pipe": "/tmp/snapfifo"
+},
+{
+	"id": "2",
+	"name": "secondary",		
+	"pipe": "/tmp/snapfifo2"
+}];
 
 module.exports = snapserver;
 function snapserver(context) {
@@ -72,6 +84,7 @@ snapserver.prototype.getUIConfig = function() {
 	if(self.config.get('debug_logging'))
 		console.log('[SnapServer] config: ' + JSON.stringify(self.config));
 		
+	// Prettify the labels for chosen codecs
 	var codecs = [
 	{
 		"name": "Flac (lossless compressed)",
@@ -84,18 +97,6 @@ snapserver.prototype.getUIConfig = function() {
 	{
 		"name": "OGG Vorbis (lossy compressed)",
 		"rate": "ogg"
-	}];
-	
-	var streams = [
-	{
-		"id": "1",
-		"name": "main",
-		"pipe": "/tmp/snapfifo"
-	},
-	{
-		"id": "2",
-		"name": "secondary",		
-		"pipe": "/tmp/snapfifo2"
 	}];
 	
     var lang_code = this.commandRouter.sharedVars.get('language_code');
@@ -132,13 +133,16 @@ snapserver.prototype.getUIConfig = function() {
 			self.logger.info("1/3 setting groups loaded");	
 			
 			// Show players
-			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2) | grep -q yes; echo $?");
+			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2) | grep -q yes; echo $?");			
 			uiconf.sections[1].content[0].value = (mpd == 1 ? false : true);
 			if(self.config.get('enable_debug_logging')) { console.log('mpd: ' + mpd); }
 			
 			let volspotconnect2 = execSync("cat /data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl | grep -q pipe; echo $?");
+			if(self.config.get('enable_debug_logging')) { console.log('volspotconnect2 (ARGS): ' + volspotconnect2); }
+			// If the TOML config files exist, one can safely assume they're being used.
+			volspotconnect2 = execSync("cat /data/plugins/music_service/volspotconnect2/volspotify.tmpl | grep -q pipe; echo $?");
+			if(self.config.get('enable_debug_logging')) { console.log('volspotconnect2 (TOML): ' + volspotconnect2); }
 			uiconf.sections[1].content[1].value = (volspotconnect2 == 1 ? false : true);
-			if(self.config.get('enable_debug_logging')) { console.log('volspotconnect2: ' + volspotconnect2); }
 			
 			let spop = execSync("cat /data/plugins/music_service/spop/spop.conf.tmpl | grep -q fifo; echo $?");
 			uiconf.sections[1].content[2].value = (spop == 1 ? false : true);
@@ -146,8 +150,7 @@ snapserver.prototype.getUIConfig = function() {
 			
 			let shairport = execSync("cat /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl | grep -q ^pipe; echo $?");
 			uiconf.sections[1].content[3].value = (shairport == 1 ? false : true);
-			if(self.config.get('enable_debug_logging')) { console.log('airplay: ' + shairport); }
-			
+			if(self.config.get('enable_debug_logging')) { console.log('airplay: ' + shairport); }			
 			self.logger.info("2/3 setting groups loaded");
 			
 			// Show service settings
@@ -170,8 +173,7 @@ snapserver.prototype.getUIConfig = function() {
 			uiconf.sections[2].content[11].value.label = streams.find(c => c.id == [self.config.get('spop_stream')]).name;
 			uiconf.sections[2].content[12].value = self.config.get('enable_airplay_service');
 			uiconf.sections[2].content[13].value.value = self.config.get('airplay_stream');
-			uiconf.sections[2].content[13].value.label = streams.find(c => c.id == [self.config.get('airplay_stream')]).name;
-			
+			uiconf.sections[2].content[13].value.label = streams.find(c => c.id == [self.config.get('airplay_stream')]).name;			
 			self.logger.info("3/3 setting groups loaded");
 			
             defer.resolve(uiconf);
@@ -229,6 +231,9 @@ snapserver.prototype.updateServerConfig = function(data) {
 		self.restartService(false);
 	});
 	
+	if(self.config.get('enable_debug_logging'))
+		self.logger.info('New config: ' + JSON.stringify(self.config));
+	
 	return defer.promise;
 };
 
@@ -259,10 +264,10 @@ snapserver.prototype.updateSnapServerConfig = function ()
 	m_stream = m_stream + m_format + m_codec;
 	s_stream = s_stream + s_format + s_codec;
 			
-	if(self.config.get('enable_debug_logging')) { console.log('main: ' + m_stream); }
-	if(self.config.get('enable_debug_logging')) { console.log('secondary: ' + s_stream); }
+	if(self.config.get('enable_debug_logging')) { self.logger.info('main | ' + m_stream); }
+	if(self.config.get('enable_debug_logging')) { self.logger.info('secondary | ' + s_stream); }
 		
-	var command = "/bin/sed -i -- 's|^SNAPSERVER_OPTS.*|SNAPSERVER_OPTS=\"-d " + m_stream + s_stream + "\"|g' /data/plugins/audio_interface/snapserver/default/snapserver";
+	var command = "/bin/sed -i -- 's|^SNAPSERVER_OPTS.*|SNAPSERVER_OPTS=\"-d " + m_stream + (self.config.get('enable_secondary_stream') ? s_stream : '')+ "\"|g' /data/plugins/audio_interface/snapserver/default/snapserver";
 	
 	exec(command, {uid:1000, gid:1000}, function (error, stout, stderr) {
 		if(error)
@@ -278,17 +283,15 @@ snapserver.prototype.updatePlayerConfigs = function(data) {
 	var self = this;
 	var defer = libQ.defer();
 	
-	if(data['patch_mpd_conf'])
-	{
-		self.config.set('patch_mpd_conf', data['patch_mpd_conf']);
-		self.config.set('mpd_sample_rate', data['mpd_sample_rate'].value);
-		self.config.set('mpd_bit_depth', data['mpd_bit_depth'].value);
-		self.config.set('mpd_channels', data['mpd_channels']);
-		self.config.set('enable_alsa_mpd', data['enable_alsa_mpd']);
-		self.config.set('enable_fifo_mpd', data['enable_fifo_mpd']);
-		self.config.set('mpd_stream', data['mpd_stream'].value);
-		self.updateMpdConfig();
-	}
+	if(self.config.get('enable_debug_logging')) { self.logger.info('Updating player configs for use with SnapServer...'); }
+	self.config.set('patch_mpd_conf', data['patch_mpd_conf']);
+	self.config.set('mpd_sample_rate', data['mpd_sample_rate'].value);
+	self.config.set('mpd_bit_depth', data['mpd_bit_depth'].value);
+	self.config.set('mpd_channels', data['mpd_channels']);
+	self.config.set('enable_alsa_mpd', data['enable_alsa_mpd']);
+	self.config.set('enable_fifo_mpd', data['enable_fifo_mpd']);
+	self.config.set('mpd_stream', data['mpd_stream'].value);
+	if(data['patch_mpd_conf']) { self.updateMpdConfig(); } // Only patch when necessary
 	self.config.set('enable_volspotconnect_service', data['enable_volspotconnect_service']);
 	self.config.set('volspotconnect_stream', data['volspotconnect_stream'].value);
 	self.config.set('enable_spop_service', data['enable_spop_service']);
@@ -319,6 +322,7 @@ snapserver.prototype.updateMpdConfig = function() {
 	var self = this;
 	var defer = libQ.defer();
 	
+	// Because of complex replacements, a script is used for patching purposes
 	self.generateMpdUpdateScript()
 	.then(function(executeScript)
         {
@@ -341,12 +345,12 @@ snapserver.prototype.generateMpdUpdateScript = function()
 		}
 
 		let tmpconf = data.replace("${SAMPLE_RATE}", self.config.get('mpd_sample_rate'));
-		tmpconf.replace("${BIT_DEPTH}", self.config.get('mpd_bit_depth'));
-		tmpconf.replace("${CHANNELS}", self.config.get('mpd_channels'));
-		tmpconf.replace(/ENABLE_ALSA/g, self.config.get('enable_alsa_mpd') == true ? "yes" : "no");
-		tmpconf.replace(/ENABLE_FIFO/g, self.config.get('enable_fifo_mpd') == true ? "yes" : "no");
+		tmpconf = tmpconf.replace("${BIT_DEPTH}", self.config.get('mpd_bit_depth'));
+		tmpconf = tmpconf.replace("${CHANNELS}", self.config.get('mpd_channels'));
+		tmpconf = tmpconf.replace(/ENABLE_ALSA/g, self.config.get('enable_alsa_mpd') == true ? "yes" : "no");
+		tmpconf = tmpconf.replace(/ENABLE_FIFO/g, self.config.get('enable_fifo_mpd') == true ? "yes" : "no");
 		
-		fs.writeFile(__dirname + "/templates/mpd_switch_to_fifo.sh", tmpconf, 'utf8', function (err) {
+		fs.writeFile(__dirname + "/mpd_switch_to_fifo.sh", tmpconf, 'utf8', function (err) {
 			if (err)
 			{
 				self.commandRouter.pushConsoleMessage('Could not write the script with error: ' + err);
@@ -358,12 +362,39 @@ snapserver.prototype.generateMpdUpdateScript = function()
 	});
 	
 	if(self.config.get('mpd_stream') == "1")
-		self.streamEdit("^path", "path\ \ \ \ \ \ \ \ \ \ \ \ \"/tmp/snapfifo\"", "/etc/mpd.conf", false);
+	{
+		if(self.config.get('enable_debug_logging')) { self.logger.info('Set pipe to: snapfifo'); }
+		self.streamEdit("[ tab]\\+path", "\ \ \ \ path\ \ \ \ \ \ \ \ \ \ \ \ \"/tmp/snapfifo\"", "/etc/mpd.conf", false);
+	}
 	else
-		self.streamEdit("^path", "path\ \ \ \ \ \ \ \ \ \ \ \ \"/tmp/snapfifo2\"", "/etc/mpd.conf", false);
+	{
+		if(self.config.get('enable_debug_logging')) { self.logger.info('Set pipe to: snapfifo2'); }
+		self.streamEdit("[ tab]\\+path", "\ \ \ \ path\ \ \ \ \ \ \ \ \ \ \ \ \"/tmp/snapfifo2\"", "/etc/mpd.conf", false);
+	}
 		
-	
+	self.restartMpd();
 	return defer.promise;
+};
+
+snapserver.prototype.restartMpd = function (callback) {
+  var self = this;
+
+  if (callback) {
+    exec('/usr/bin/sudo /bin/systemctl restart mpd.service ', {uid: 1000, gid: 1000},
+      function (error, stdout, stderr) {
+        self.commandRouter.executeOnPlugin('music_service', 'mpd', 'mpdEstablish');
+        callback(error);
+      });
+  } else {
+    exec('/usr/bin/sudo /bin/systemctl restart mpd.service ', {uid: 1000, gid: 1000},
+      function (error, stdout, stderr) {
+        if (error) {
+          self.logger.error('Cannot restart MPD: ' + error);
+        } else {
+		  self.commandRouter.executeOnPlugin('music_service', 'mpd', 'mpdEstablish');
+        }
+      });
+  }
 };
 
 snapserver.prototype.updateShairportConfig = function(enable) {
@@ -372,12 +403,13 @@ snapserver.prototype.updateShairportConfig = function(enable) {
 	if (enable === true)
 	{
 		self.streamEdit("alsa", "pipe", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
-		self.streamEdit("output_device", "name = \"/tmp/" +  streams.find(c => c.id == [self.config.get('airplay_stream')]).pipe + "\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+		self.streamEdit("output_device", "name = \"" +  streams.find(c => c.id == [self.config.get('airplay_stream')]).pipe + "\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 	}
 	else
 	{
 		self.streamEdit("pipe", "alsa", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
-		self.streamEdit("alsa", "output_device = \"${device}\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+		// The config item 'name' is ambiguous, therefore it can't be rolled back like this.
+		//self.streamEdit("name", "output_device = \"${device}\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 	}
 	
 	return true;
@@ -390,137 +422,31 @@ snapserver.prototype.updateSpotifyConfig = function(volspotconnect2, spop) {
 	if(volspotconnect2 === true)
 	{
 		// Legacy implementation
-		self.streamEdit("--device ${outdev}", "--backend pipe --device /tmp/" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + " ${normalvolume} \\\\", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
+		self.streamEdit("--device ${outdev}", "--backend pipe --device " +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + " ${normalvolume} \\\\", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
 		// New implementation > TOML
-		self.streamEdit("device", "device = \\x27/tmp/" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + "\\x27 --backend pipe", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("device", "device = \\x27" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + "\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("backend", "backend = \\x27pipe\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		
 	}
 	else	
 	{
 		self.streamEdit("--backend", "--device ${outdev}", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
-		self.streamEdit("device", "device = '${outdev}'", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("device", "device = \\x27${outdev}\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("backend", "backend = \\x27alsa\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 	}
 	
 	if(spop === true)
 	{
-		// Spop
-		self.streamEdit("alsa", "raw", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
-		self.streamEdit("${outdev}", "/tmp/" +  streams.find(c => c.id == [self.config.get('spop_stream')]).pipe, "/data/plugins/music_service/spop/spop.conf.tmpl", false);
+		// Edit SPOP config, can be written neater, but this makes it more clear.
+		self.streamEdit("output_type", "output_type = raw", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
+		self.streamEdit("output_name", "output_name = " + streams.find(c => c.id == [self.config.get('spop_stream')]).pipe, "/data/plugins/music_service/spop/spop.conf.tmpl", false);
 	}
 	else
 	{
-		self.streamEdit("raw", "alsa", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
-		self.streamEdit("/tmp/" +  streams.find(c => c.id == [self.config.get('spop_stream')]).pipe, "${outdev}", "/data/plugins/music_service/spop/spop.conf.tmpl", false);		
+		self.streamEdit("output_type", "output_type = alsa", "/data/plugins/music_service/spop/spop.conf.tmpl", false);
+		self.streamEdit("output_name", "output_name = ${outdev}", "/data/plugins/music_service/spop/spop.conf.tmpl", false);		
 	}
 
-	return defer.promise;
-};
-
-snapserver.prototype.patchAsoundConfig = function()
-{
-	var self = this;
-	var defer = libQ.defer();
-	
-	// define the replacement dictionary
-	var replacementDictionary = [
-		{ placeholder: "${SAMPLE_RATE}", replacement: self.config.get('sample_rate') },
-		{ placeholder: "${OUTPUT_PIPE}", replacement: self.config.get('spotify_pipe') }
-	];
-	
-	self.createAsoundConfig(replacementDictionary)
-	.then(function (copyAsoundConfig) {
-		let edefer = libQ.defer();
-		execSync("/usr/bin/rsync --ignore-missing-args /etc/asound.conf "+ __dirname +"/templates/asound.conf", {uid:1000, gid:1000}, function (error, stout, stderr) {
-			if(error)
-			{
-				self.logger.error('Could not copy config file to temp location with error: ' + error);
-				defer.reject(new Error(error));
-			}
-		});
-		edefer.resolve();
-	})
-	.then(function (touchFile) {
-		let edefer = libQ.defer();
-		exec("/bin/touch "+ __dirname +"/templates/asound.conf", {uid:1000, gid:1000}, function (error, stout, stderr) {
-			if(error)
-			{
-				console.log(stderr);
-				self.logger.error('Could not touch config with error: ' + error);
-				self.commandRouter.pushToastMessage('error', "Configuration failed", "Failed to touch asound configuration file with error: " + error);
-				edefer.reject(new Error(error));
-			}
-		});
-		edefer.resolve();
-	})
-	.then(function (clear_current_asound_config) {
-		let edefer = libQ.defer();
-		let pluginName = __dirname.split('/').slice(-1).toUpperCase();
-		exec("/bin/sed -i -- '/#" + pluginName + "/,/#ENDOF" + pluginName + "/d' "+ __dirname +"/templates/asound.conf", {uid:1000, gid:1000}, function (error, stout, stderr) {
-			if(error)
-			{
-				console.log(stderr);
-				self.logger.error('Could not clear config with error: ' + error);
-				self.commandRouter.pushToastMessage('error', "Configuration failed", "Failed to update asound configuration with error: " + error);
-				edefer.reject(new Error(error));
-			}
-		});
-		edefer.resolve();
-	})
-	.then(function (copy_new_config) {
-		let edefer = libQ.defer();
-		// needs alsactl -L -R restore
-		var cmd = "/bin/cat " + __dirname + "/templates/asound.section >> "+ __dirname +"/templates/asound.conf";
-		fs.writeFile(__dirname + "/" + __dirname.split('/').slice(-1) + "_asound_patch.sh", cmd, 'utf8', function (err) {
-			if (err)
-			{
-				self.commandRouter.pushConsoleMessage('Could not write the script with error: ' + err);
-				edefer.reject(new Error(err));
-			}
-		});
-		edefer.resolve();
-	})
-	.then(function (placeFilesBack) {
-		exec("/usr/bin/sudo /bin/systemctl restart snap-activator", {uid:1000, gid:1000}, function (error, stout, stderr) {
-			if(error)
-			{
-				self.logger.error('Could not replace /etc/asound.conf with error: ' + error);
-				defer.reject(new Error(error));
-			}
-		});
-		
-		defer.resolve(placeFiles);
-	});
-	
-	self.commandRouter.pushToastMessage('success', "Successful push", "Successfully pushed new ALSA configuration");
-	return defer.promise;
-};
-
-snapserver.prototype.createAsoundConfig = function(replacements)
-{
-	var self = this;
-	var defer = libQ.defer();
-	
-	fs.readFile(__dirname + "/templates/asound." + __dirname.split('/').slice(-1), 'utf8', function (err, data) {
-		if (err) {
-			defer.reject(new Error(err));
-		}
-
-		var tmpConf = data;
-		for (var rep in replacements)
-		{
-			tmpConf = tmpConf.replace(replacements[rep]["placeholder"], replacements[rep]["replacement"]);			
-		}
-			
-		fs.writeFile(__dirname + "/templates/asound.section", tmpConf, 'utf8', function (err) {
-				if (err)
-				{
-					self.commandRouter.pushConsoleMessage('Could not write the script with error: ' + err);
-					defer.reject(new Error(err));
-				}
-				else 
-					defer.resolve();
-		});
-	});
-	
 	return defer.promise;
 };
 
@@ -540,6 +466,7 @@ snapserver.prototype.executeShellScript = function (scriptName)
 		}
 
 		self.commandRouter.pushConsoleMessage('Successfully executed script {' + scriptName + '}');
+		//fs.unlinkSync(scriptName)
 		defer.resolve();
 	});
 
