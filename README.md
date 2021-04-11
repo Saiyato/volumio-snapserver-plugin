@@ -19,4 +19,4 @@ pipe =
 ```
 
 ### Restore core-files
-`volumio updater restore volumio`
+`volumio updater restorevolumio`
