@@ -6,11 +6,12 @@ if [ ! -f $INSTALLING ]; then
 
 	touch $INSTALLING
 	# Echo version number, for bug tracking purposes
-	echo "## Installing SnapServer plugin v1.0.1 ##"
+	echo "## Installing SnapServer plugin v1.2.6 ##"
 	
 	echo "Detecting CPU architecture and Debian version"
 	ARCH=$(dpkg --print-architecture)
 	DEBIAN_VERSION=$(cat /etc/os-release | grep '^VERSION=' | cut -d '(' -f2 | tr -d ')"')
+	SNAPCONF=NO
 	echo "CPU architecture: " $ARCH
 	echo "Debian version: " $DEBIAN_VERSION
 
@@ -24,6 +25,7 @@ if [ ! -f $INSTALLING ]; then
 		else
 			echo "Fetching latest releases of SnapCast components..."
 			wget $(curl -s https://api.github.com/repos/badaix/snapcast/releases/latest | grep 'armhf' | grep 'server' | cut -d\" -f4) -P /home/volumio/snapserver
+			SNAPCONF="YES"
 		fi
 	elif [ $ARCH = "i386" ] || [ $ARCH = "i486" ] || [ $ARCH = "i586" ] || [ $ARCH = "i686" ] || [ $ARCH = "i786" ]; then
 		if [ $DEBIAN_VERSION = "jessie" ]; then
@@ -69,6 +71,9 @@ if [ ! -f $INSTALLING ]; then
 	 *enabled*) sed -i -- '/.*type.*alsa.*/!b;n;c\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ enabled\ \ \ \ \ \ \ \ \ "no"' /etc/mpd.conf ;;
 	 *) sed -i -- 's|.*type.*alsa.*|&\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ enabled\ \ \ \ \ \ \ \ \ "no"|g' /etc/mpd.conf ;;
 	esac
+	
+	# Copy shairport config for restoration purposes
+	cp /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl.bak
 		
 	# Edit the systemd unit to create fifo pipes
 	systemctl enable /data/plugins/audio_interface/snapserver/unit/secondary-fifo.service
@@ -87,6 +92,11 @@ if [ ! -f $INSTALLING ]; then
 	# Remove files and replace them with symlinks
 	rm /etc/default/snapserver
 	ln -fs /data/plugins/audio_interface/snapserver/default/snapserver /etc/default/snapserver
+	if($SNAPCONF === "YES"); then
+		rm /etc/snapserver.conf
+		ln -fs /data/plugins/audio_interface/snapserver/templates/snapserver.conf /etc/snapserver.conf
+		sed -i -- "s|^SNAPSERVER_OPTS.*||g" /etc/default/snapserver
+	fi
 	
 	# Cleanup files
 	rm -rf /home/volumio/snapserver

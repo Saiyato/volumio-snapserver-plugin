@@ -11,6 +11,11 @@ var streams = [
 	"id": "1",
 	"name": "main",
 	"pipe": "/tmp/snapfifo"
+},
+{
+	"id": "2",
+	"name": "secondary",		
+	"pipe": "/tmp/snapfifo2"
 }];
 
 module.exports = snapserver;
@@ -113,7 +118,18 @@ snapserver.prototype.getUIConfig = function() {
 			uiconf.sections[0].content[5].value.value = self.config.get('main_stream_codec');
 			uiconf.sections[0].content[5].value.label = codecs.find(c => c.rate == [self.config.get('main_stream_codec')]).name;
 			
-			uiconf.sections[0].content[6].value = self.config.get('enable_debug_logging');
+			// Secondary stream
+			uiconf.sections[0].content[6].value = self.config.get('enable_secondary_stream');
+			uiconf.sections[0].content[7].value = self.config.get('secondary_stream_name');
+			// 8 = expert settings
+			uiconf.sections[0].content[9].value.value = self.config.get('secondary_stream_sample_rate');
+			uiconf.sections[0].content[9].value.label = self.config.get('secondary_stream_sample_rate') + 'Hz';
+			uiconf.sections[0].content[10].value.value = self.config.get('secondary_stream_bit_depth');
+			uiconf.sections[0].content[10].value.label = self.config.get('secondary_stream_bit_depth') + ' bits'
+			uiconf.sections[0].content[11].value = self.config.get('secondary_stream_channels');
+			uiconf.sections[0].content[12].value.value = self.config.get('secondary_stream_codec');
+			uiconf.sections[0].content[12].value.label = codecs.find(c => c.rate == [self.config.get('secondary_stream_codec')]).name;
+			uiconf.sections[0].content[13].value = self.config.get('enable_debug_logging');
 			self.logger.info("1/3 setting groups loaded");	
 			
 			// Show players
@@ -202,6 +218,12 @@ snapserver.prototype.updateServerConfig = function(data) {
 	self.config.set('main_stream_bit_depth', data['main_stream_bit_depth'].value);
 	self.config.set('main_stream_channels', data['main_stream_channels']);
 	self.config.set('main_stream_codec', data['main_stream_codec'].value);
+	self.config.set('enable_secondary_stream', data['enable_secondary_stream']);
+	self.config.set('secondary_stream_name', data['secondary_stream_name']);
+	self.config.set('secondary_stream_sample_rate', data['secondary_stream_sample_rate'].value);
+	self.config.set('secondary_stream_bit_depth', data['secondary_stream_bit_depth'].value);
+	self.config.set('secondary_stream_channels', data['secondary_stream_channels']);
+	self.config.set('secondary_stream_codec', data['secondary_stream_codec'].value);
 	self.config.set('enable_debug_logging', data['enable_debug_logging']);
 	
 	self.updateSnapServerConfig()
@@ -220,26 +242,45 @@ snapserver.prototype.updateSnapServerConfig = function ()
 	var self = this;
 	var defer = libQ.defer();
 	
-	let stream = "pipe:///tmp/snapfifo?name=";
-	stream = (self.config.get('main_stream_name') == undefined ? stream + 'Volumio' : stream + self.config.get('main_stream_name')) + '\\&mode=read';
-
-	let format = self.config.get('main_stream_sample_rate') + ':' + self.config.get('main_stream_bit_depth') + ':' + self.config.get('main_stream_channels');
-	let full_format = (format == undefined || format == '48000:16:2' ? '' : '\\&sampleformat=' + format);
-	
-	let codec = (self.config.get('main_stream_codec') == undefined || self.config.get('main_stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('main_stream_codec'));
-	let full_stream = stream + full_format + codec;
-	
 	if(fs.existsSync('/etc/snapserver.conf'))
 	{
-		if(self.config.get('enable_debug_logging')) { self.logger.info('snapserver.conf | ' + stream); }			
-		self.streamEdit("^source", "source = " + stream, __dirname + "/templates/snapserver.conf", false);
-		self.streamEdit("^sampleformat", "sampleformat = " + format, __dirname + "/templates/snapserver.conf", false);
-		self.streamEdit("^codec", "codec = " + self.config.get('main_stream_codec'), __dirname + "/templates/snapserver.conf", false);		
+		self.streamEdit("source", "source = pipe:///" + , __dirname+"/templates/snapserver.conf", false);
 	}
 	else
-	{	
-		if(self.config.get('enable_debug_logging')) { self.logger.info('systemd unit | ' + full_stream); }			
-		self.streamEdit("^SNAPSERVER_OPTS", "SNAPSERVER_OPTS=\"-d -s " + full_stream , __dirname + "/default/snapserver", false);
+	{
+		let m_stream = "-s pipe:///tmp/snapfifo?name=";
+		let s_stream = " -s pipe:///tmp/snapfifo2?name=";
+
+		m_stream = (self.config.get('main_stream_name') == undefined ? m_stream + 'Volumio' : m_stream + self.config.get('main_stream_name'));
+		s_stream = (self.config.get('secondary_stream_name') == undefined ? s_stream + 'Volumio2' : s_stream + self.config.get('secondary_stream_name'));
+		
+		m_stream = m_stream + '\\&mode=read';
+		s_stream = s_stream + '\\&mode=read';
+
+		let m_format = self.config.get('main_stream_sample_rate') + ':' + self.config.get('main_stream_bit_depth') + ':' + self.config.get('main_stream_channels');
+		let s_format = self.config.get('secondary_stream_sample_rate') + ':' + self.config.get('secondary_stream_bit_depth') + ':' + self.config.get('secondary_stream_channels');
+		m_format = (m_format == undefined || m_format == '48000:16:2' ? '' : '\\&sampleformat=' + m_format);
+		s_format = (s_format == undefined || m_format == '48000:16:2' ? '' : '\\&sampleformat=' + s_format);
+		
+		let m_codec = (self.config.get('main_stream_codec') == undefined || self.config.get('main_stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('main_stream_codec'));
+		let s_codec = (self.config.get('secondary_stream_codec') == undefined || self.config.get('secondary_stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('secondary_stream_codec'));
+
+		//var cli_commands = (self.config.get('server_cli') == undefined ? '' : self.config.get('server_cli'));
+
+		m_stream = m_stream + m_format + m_codec;
+		s_stream = s_stream + s_format + s_codec;
+				
+		if(self.config.get('enable_debug_logging')) { self.logger.info('main | ' + m_stream); }
+		if(self.config.get('enable_debug_logging')) { self.logger.info('secondary | ' + s_stream); }
+			
+		var command = "/bin/sed -i -- 's|^SNAPSERVER_OPTS.*|SNAPSERVER_OPTS=\"-d " + m_stream + (self.config.get('enable_secondary_stream') ? s_stream : '')+ "\"|g' /data/plugins/audio_interface/snapserver/default/snapserver";
+		
+		exec(command, {uid:1000, gid:1000}, function (error, stout, stderr) {
+			if(error)
+				console.log(stderr);
+			
+			defer.resolve();
+		});
 	}
 	
 	return defer.promise;
@@ -373,12 +414,12 @@ snapserver.prototype.updateShairportConfig = function(enable) {
 	}
 	else
 	{
-		//self.streamEdit("pipe", "alsa", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+		self.streamEdit("pipe", "alsa", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 		// The config item 'name' is ambiguous, therefore it can't be rolled back like this.
 		//self.streamEdit("name", "output_device = \"${device}\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 		
 		// Better to create a backup of the original config and restore it.
-		self.restoreShairportConfig();
+		// cp shairport-sync.conf.tmpl.bak shairport-sync.conf.tmpl
 	}
 	
 	return true;
@@ -468,21 +509,6 @@ snapserver.prototype.streamEdit = function (pattern, value, inFile, append)
 	return defer.promise;
 };
 
-snapserver.prototype.restoreShairportConfig = function ()
-{
-	var self = this;
-	var defer = libQ.defer();
-	let command = "/bin/cp /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl.bak /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl";
-	exec(command, {uid:1000, gid:1000}, function (error, stout, stderr) {
-		if(error)
-			console.log(stderr);
-
-		defer.resolve();
-	});
-	
-	return defer.promise;
-};
-
 snapserver.prototype.isValidJSON = function (str) 
 {
 	var self = this;
@@ -530,7 +556,7 @@ snapserver.prototype.stopService = function ()
 	var self = this;
 	var defer=libQ.defer();
 
-	var command = "/usr/bin/sudo /bin/systemctl stop snapserver";
+	var command = "/usr/bin/sudo /bin/systemctl stop SnapServer";
 	exec(command, {uid:1000,gid:1000}, function (error, stdout, stderr) {
 		if (error !== null) {
 			self.commandRouter.pushConsoleMessage('The following error occurred while stopping SnapServer: ' + error);

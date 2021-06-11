@@ -21,6 +21,12 @@
 			"main_stream_bit_depth",
 			"main_stream_channels",
 			"main_stream_codec",
+			"enable_secondary_stream",
+			"secondary_stream_name",
+			"secondary_stream_sample_rate",
+			"secondary_stream_bit_depth",
+			"secondary_stream_channels",
+			"secondary_stream_codec",
 			"enable_debug_logging"]
 		},
 		"content": [{
@@ -123,6 +129,124 @@
 			],
 			"visibleIf": {
 				"field": "enable_main_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "enable_secondary_stream",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_SECONDARY_STREAM",
+			"description": "TRANSLATE.SNAPSERVER.DD_ENABLE_SECONDARY_STREAM",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_SECONDARY_STREAM",
+			"value": false
+		},
+		{
+			"id": "secondary_stream_name",			
+			"element": "input",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_SECONDARY_STREAM_NAME",
+			"description": "TRANSLATE.SNAPSERVER.DD_SECONDARY_STREAM_NAME",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_NAME",
+			"value": "Volumio_Secondary_Stream",
+			"visibleIf": {
+				"field": "enable_secondary_stream",
+				"value": true
+			}
+		},
+		{
+			"id": "enable_secondary_stream_expert_settings",
+			"element": "switch",
+			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_EXPERT_SETTINGS",
+			"description": "TRANSLATE.SNAPSERVER.DD_EXPERT_SETTING",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_SECONDARY_STREAM_EXPERT_SETTINGS",
+			"value": false,
+			"visibleIf": {
+				"field": "enable_secondary_stream",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_sample_rate",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_SAMPLE_RATE",
+			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_SAMPLE_RATE",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_SAMPLE_RATE",
+			"value": {
+				"value": 44100,
+				"label": "44100Hz"
+			},
+			"options": [
+				{"label":"8000Hz","value":"8000"},
+				{"label":"11025Hz","value":"11025"},
+				{"label":"16000Hz","value":"16000"},
+				{"label":"22050Hz","value":"22050"},
+				{"label":"24000Hz","value":"24000"},
+				{"label":"32000Hz","value":"32000"},
+				{"label":"44100Hz","value":"44100"},
+				{"label":"48000Hz","value":"48000"},
+				{"label":"64000Hz","value":"64000"},
+				{"label":"96000Hz","value":"96000"},
+				{"label":"192000Hz","value":"192000"}			
+			],
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_bit_depth",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_BIT_DEPTH",
+			"description": "TRANSLATE.SNAPSERVER.DD_BIT_DEPTH",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_BIT_DEPTH",
+			"value": {
+				"value": 16,
+				"label": "16 bits"
+			},
+			"options": [
+				{"label":"8 bits","value":"8"},
+				{"label":"16 bits","value":"16"},
+				{"label":"24 bits","value":"24"},
+				{"label":"32 bits","value":"32"}				
+			],
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_channels",
+			"element": "input",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CHANNELS",
+			"description": "TRANSLATE.SNAPSERVER.DD_CHANNELS",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_CHANNELS",
+			"value": "2",
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
+				"value": true
+			}
+		},
+		{
+			"id": "secondary_stream_codec",
+			"element": "select",
+			"type": "text",
+			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CODEC",
+			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_CODEC",
+			"label": "TRANSLATE.SNAPSERVER.SECONDARY_STREAM_CODEC",
+			"value": {
+				"value": "flac",
+				"label": "Flac (lossless compressed)"
+			},
+			"options": [
+				{"label":"PCM (lossless uncompressed)","value":"pcm"},
+				{"label":"Flac (lossless compressed [default])","value":"flac"},
+				{"label":"OGG Vorbis","value":"ogg"}			
+			],
+			"visibleIf": {
+				"field": "enable_secondary_stream_expert_settings",
 				"value": true
 			}
 		},
@@ -312,7 +436,8 @@
 				"label": "main"
 			},
 			"options": [
-				{"label":"main","value":"1"}
+				{"label":"main","value":"1"},
+				{"label":"secondary","value":"2"}				
 			],
 			"visibleIf": {
 				"field": "expose_svc_expert_settings",
@@ -338,7 +463,8 @@
 				"label": "main"
 			},
 			"options": [
-				{"label":"main","value":"1"}
+				{"label":"main","value":"1"},
+				{"label":"secondary","value":"2"}				
 			],
 			"visibleIf": {
 				"field": "expose_svc_expert_settings",
@@ -364,7 +490,8 @@
 				"label": "main"
 			},
 			"options": [
-				{"label":"main","value":"1"}
+				{"label":"main","value":"1"},
+				{"label":"secondary","value":"2"}				
 			],
 			"visibleIf": {
 				"field": "expose_svc_expert_settings",
@@ -390,7 +517,8 @@
 				"label": "main"
 			},
 			"options": [
-				{"label":"main","value":"1"}
+				{"label":"main","value":"1"},
+				{"label":"secondary","value":"2"}				
 			],
 			"visibleIf": {
 				"field": "expose_svc_expert_settings",
