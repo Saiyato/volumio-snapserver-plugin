@@ -103,15 +103,15 @@ snapserver.prototype.getUIConfig = function() {
         .then(function(uiconf)
         {
 			// Main stream
-			uiconf.sections[0].content[0].value = self.config.get('main_stream_name');
+			uiconf.sections[0].content[0].value = self.config.get('stream_name');
 			// 1 = expert settings			
-			uiconf.sections[0].content[2].value.value = self.config.get('main_stream_sample_rate');
-			uiconf.sections[0].content[2].value.label = self.config.get('main_stream_sample_rate') + 'Hz';
-			uiconf.sections[0].content[3].value.value = self.config.get('main_stream_bit_depth');
-			uiconf.sections[0].content[3].value.label = self.config.get('main_stream_bit_depth') + ' bits';
-			uiconf.sections[0].content[4].value = self.config.get('main_stream_channels');
-			uiconf.sections[0].content[5].value.value = self.config.get('main_stream_codec');
-			uiconf.sections[0].content[5].value.label = codecs.find(c => c.rate == [self.config.get('main_stream_codec')]).name;
+			uiconf.sections[0].content[2].value.value = self.config.get('stream_sample_rate');
+			uiconf.sections[0].content[2].value.label = self.config.get('stream_sample_rate') + 'Hz';
+			uiconf.sections[0].content[3].value.value = self.config.get('stream_bit_depth');
+			uiconf.sections[0].content[3].value.label = self.config.get('stream_bit_depth') + ' bits';
+			uiconf.sections[0].content[4].value = self.config.get('stream_channels');
+			uiconf.sections[0].content[5].value.value = self.config.get('stream_codec');
+			uiconf.sections[0].content[5].value.label = codecs.find(c => c.rate == [self.config.get('stream_codec')]).name;
 			
 			uiconf.sections[0].content[6].value = self.config.get('enable_debug_logging');
 			self.logger.info("1/3 setting groups loaded");	
@@ -119,6 +119,7 @@ snapserver.prototype.getUIConfig = function() {
 			// Show players
 			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2) | grep -q yes; echo $?");			
 			uiconf.sections[1].content[0].value = (mpd == 1 ? false : true);
+			uiconf.sections[1].content[0].description = (mpd == 1 ? "Inactive" : "Active");
 			if(self.config.get('enable_debug_logging')) { console.log('mpd: ' + mpd); }
 			
 			let volspotconnect2 = execSync("cat /data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl | grep -q pipe; echo $?");
@@ -127,13 +128,16 @@ snapserver.prototype.getUIConfig = function() {
 			volspotconnect2 = execSync("cat /data/plugins/music_service/volspotconnect2/volspotify.tmpl | grep -q pipe; echo $?");
 			if(self.config.get('enable_debug_logging')) { console.log('volspotconnect2 (TOML): ' + volspotconnect2); }
 			uiconf.sections[1].content[1].value = (volspotconnect2 == 1 ? false : true);
+			uiconf.sections[1].content[1].description = (volspotconnect2 == 1 ? "Inactive" : "Active");
 			
 			let spop = execSync("cat /data/plugins/music_service/spop/spop.conf.tmpl | grep -q fifo; echo $?");
 			uiconf.sections[1].content[2].value = (spop == 1 ? false : true);
+			uiconf.sections[1].content[2].description = (spop == 1 ? "Inactive" : "Active");
 			if(self.config.get('enable_debug_logging')) { console.log('spop: ' + spop); }
 			
 			let shairport = execSync("cat /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl | grep -q ^pipe; echo $?");
 			uiconf.sections[1].content[3].value = (shairport == 1 ? false : true);
+			uiconf.sections[1].content[3].description = (shairport == 1 ? "Inactive" : "Active");
 			if(self.config.get('enable_debug_logging')) { console.log('airplay: ' + shairport); }			
 			self.logger.info("2/3 setting groups loaded");
 			
@@ -197,11 +201,11 @@ snapserver.prototype.updateServerConfig = function(data) {
 	var defer = libQ.defer();
 	
 	// Always update snapserver config, there's no neat if-statement possible afaik; it also doesn't break anything (worst case is a playback hiccup of a few seconds)
-	self.config.set('main_stream_name', data['main_stream_name']);
-	self.config.set('main_stream_sample_rate', data['main_stream_sample_rate'].value);
-	self.config.set('main_stream_bit_depth', data['main_stream_bit_depth'].value);
-	self.config.set('main_stream_channels', data['main_stream_channels']);
-	self.config.set('main_stream_codec', data['main_stream_codec'].value);
+	self.config.set('stream_name', data['stream_name']);
+	self.config.set('stream_sample_rate', data['stream_sample_rate'].value);
+	self.config.set('stream_bit_depth', data['stream_bit_depth'].value);
+	self.config.set('stream_channels', data['stream_channels']);
+	self.config.set('stream_codec', data['stream_codec'].value);
 	self.config.set('enable_debug_logging', data['enable_debug_logging']);
 	
 	self.updateSnapServerConfig()
@@ -222,12 +226,12 @@ snapserver.prototype.updateSnapServerConfig = function ()
 	var defer = libQ.defer();
 	
 	let stream = "pipe:///tmp/snapfifo?name=";
-	stream = (self.config.get('main_stream_name') == undefined ? stream + 'Volumio' : stream + self.config.get('main_stream_name')) + '\\&mode=read';
+	stream = (self.config.get('stream_name') == undefined ? stream + 'Volumio' : stream + self.config.get('stream_name')) + '\\&mode=read';
 
-	let format = self.config.get('main_stream_sample_rate') + ':' + self.config.get('main_stream_bit_depth') + ':' + self.config.get('main_stream_channels');
+	let format = self.config.get('stream_sample_rate') + ':' + self.config.get('stream_bit_depth') + ':' + self.config.get('stream_channels');
 	let full_format = (format == undefined || format == '48000:16:2' ? '' : '\\&sampleformat=' + format);
 	
-	let codec = (self.config.get('main_stream_codec') == undefined || self.config.get('main_stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('main_stream_codec'));
+	let codec = (self.config.get('stream_codec') == undefined || self.config.get('stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('stream_codec'));
 	let full_stream = stream + full_format + codec;
 	
 	if(fs.existsSync('/etc/snapserver.conf'))
@@ -235,7 +239,7 @@ snapserver.prototype.updateSnapServerConfig = function ()
 		if(self.config.get('enable_debug_logging')) { self.logger.info('snapserver.conf | ' + stream); }			
 		self.streamEdit("^source", "source = " + stream, __dirname + "/templates/snapserver.conf", false);
 		self.streamEdit("^sampleformat", "sampleformat = " + format, __dirname + "/templates/snapserver.conf", false);
-		self.streamEdit("^codec", "codec = " + self.config.get('main_stream_codec'), __dirname + "/templates/snapserver.conf", false);		
+		self.streamEdit("^codec", "codec = " + self.config.get('stream_codec'), __dirname + "/templates/snapserver.conf", false);		
 	}
 	else
 	{	

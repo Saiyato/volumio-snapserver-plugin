@@ -16,38 +16,38 @@
 		},
 		"saveButton": {
 			"label": "TRANSLATE.SNAPSERVER.SAVE",
-			"data": ["main_stream_name",
-			"main_stream_sample_rate",
-			"main_stream_bit_depth",
-			"main_stream_channels",
-			"main_stream_codec",
+			"data": ["stream_name",
+			"stream_sample_rate",
+			"stream_bit_depth",
+			"stream_channels",
+			"stream_codec",
 			"enable_debug_logging"]
 		},
 		"content": [{
-			"id": "main_stream_name",
+			"id": "stream_name",
 			"element": "input",
 			"type": "text",
-			"doc": "TRANSLATE.SNAPSERVER.D_MAIN_STREAM_NAME",
-			"description": "TRANSLATE.SNAPSERVER.DD_MAIN_STREAM_NAME",
-			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_NAME",
+			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_NAME",
+			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_NAME",
+			"label": "TRANSLATE.SNAPSERVER.STREAM_NAME",
 			"isDisabled": true,
-			"value": "Volumio_Main_Stream"
+			"value": "VolumioStream"
 		},
 		{
-			"id": "enable_main_stream_expert_settings",
+			"id": "enable_expert_stream_settings",
 			"element": "switch",
 			"doc": "TRANSLATE.SNAPSERVER.D_ENABLE_EXPERT_SETTINGS",
 			"description": "TRANSLATE.SNAPSERVER.DD_EXPERT_SETTING",
-			"label": "TRANSLATE.SNAPSERVER.ENABLE_MAIN_STREAM_EXPERT_SETTINGS",
+			"label": "TRANSLATE.SNAPSERVER.ENABLE_EXPERT_STREAM_SETTINGS",
 			"value": false
 		},
 		{
-			"id": "main_stream_sample_rate",
+			"id": "stream_sample_rate",
 			"element": "select",
 			"type": "text",
 			"doc": "TRANSLATE.SNAPSERVER.D_SAMPLE_RATE",
 			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_SAMPLE_RATE",
-			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_SAMPLE_RATE",
+			"label": "TRANSLATE.SNAPSERVER.STREAM_SAMPLE_RATE",
 			"value": {
 				"value": 44100,
 				"label": "44100Hz"
@@ -66,17 +66,17 @@
 				{"label":"192000Hz","value":"192000"}
 			],
 			"visibleIf": {
-				"field": "enable_main_stream_expert_settings",
+				"field": "enable_expert_stream_settings",
 				"value": true
 			}
 		},
 		{
-			"id": "main_stream_bit_depth",
+			"id": "stream_bit_depth",
 			"element": "select",
 			"type": "text",
 			"doc": "TRANSLATE.SNAPSERVER.D_BIT_DEPTH",
 			"description": "TRANSLATE.SNAPSERVER.DD_BIT_DEPTH",
-			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_BIT_DEPTH",
+			"label": "TRANSLATE.SNAPSERVER.STREAM_BIT_DEPTH",
 			"value": {
 				"value": 16,
 				"label": "16 bits"
@@ -88,30 +88,30 @@
 				{"label":"32 bits","value":"32"}			
 			],
 			"visibleIf": {
-				"field": "enable_main_stream_expert_settings",
+				"field": "enable_expert_stream_settings",
 				"value": true
 			}
 		},
 		{
-			"id": "main_stream_channels",
+			"id": "stream_channels",
 			"element": "input",
 			"type": "text",
 			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CHANNELS",
 			"description": "TRANSLATE.SNAPSERVER.DD_CHANNELS",
-			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_CHANNELS",
+			"label": "TRANSLATE.SNAPSERVER.STREAM_CHANNELS",
 			"value": "2",
 			"visibleIf": {
-				"field": "enable_main_stream_expert_settings",
+				"field": "enable_expert_stream_settings",
 				"value": true
 			}
 		},
 		{
-			"id": "main_stream_codec",
+			"id": "stream_codec",
 			"element": "select",
 			"type": "text",
 			"doc": "TRANSLATE.SNAPSERVER.D_STREAM_CODEC",
 			"description": "TRANSLATE.SNAPSERVER.DD_STREAM_CODEC",
-			"label": "TRANSLATE.SNAPSERVER.MAIN_STREAM_CODEC",
+			"label": "TRANSLATE.SNAPSERVER.STREAM_CODEC",
 			"value": {
 				"value": "flac",
 				"label": "Flac (lossless compressed)"
@@ -122,7 +122,7 @@
 				{"label":"OGG Vorbis","value":"ogg"}			
 			],
 			"visibleIf": {
-				"field": "enable_main_stream_expert_settings",
+				"field": "enable_expert_stream_settings",
 				"value": true
 			}
 		},
@@ -144,28 +144,28 @@
 		"content": [{
 			"id": "show_mpd",
 			"element": "switch",
-			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
+			"doc": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
 			"label": "TRANSLATE.SNAPSERVER.SHOW_MPD",
 			"value": false
 		},
 		{
 			"id": "show_volspotconnect2",
 			"element": "switch",
-			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
+			"doc": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
 			"label": "TRANSLATE.SNAPSERVER.SHOW_VOLSPOTCONNECT",
 			"value": false
 		},
 		{
 			"id": "show_spop",
 			"element": "switch",
-			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
+			"doc": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
 			"label": "TRANSLATE.SNAPSERVER.SHOW_SPOP",
 			"value": false
 		},
 		{
 			"id": "show_airplay",
 			"element": "switch",
-			"description": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
+			"doc": "TRANSLATE.SNAPSERVER.DD_SHOW_PLAYER",
 			"label": "TRANSLATE.SNAPSERVER.SHOW_AIRPLAY",
 			"enabled": "no",
 			"value": false
@@ -236,7 +236,7 @@
 				{"label":"48000Hz","value":"48000"},
 				{"label":"64000Hz","value":"64000"},
 				{"label":"96000Hz","value":"96000"},
-				{"label":"192000Hz","value":"192000"}			
+				{"label":"192000Hz","value":"192000"}
 			],
 			"visibleIf": {
 				"field": "expose_svc_expert_settings",
