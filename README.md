@@ -27,6 +27,7 @@ For MPD I use the following:
 ```
 
 Subsequently I use the same settings for the outgoing stream, this seems to be working for MPD, Airplay (if and when enabled) and Spotify (all implementations).
+Setting stream (and MPD, to prevent resampling) to 48kHz seems to sound slightly accelerated in comparison to 44.1kHz when playing Spotify streams.
 
 ### Restore core-files
 `volumio updater restorevolumio`
