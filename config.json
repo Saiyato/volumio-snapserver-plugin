@@ -1,21 +1,21 @@
 {
-  "main_stream_name": {
+  "stream_name": {
     "type": "string",
     "value": "VolumioMain"
   },    
-  "main_stream_sample_rate": {
+  "stream_sample_rate": {
     "type": "string",
     "value": "44100"
   },
-  "main_stream_bit_depth": {
+  "stream_bit_depth": {
     "type": "string",
     "value": "16" 
   },
-  "main_stream_channels": {
+  "stream_channels": {
     "type": "string",
     "value": "2"
   },
-  "main_stream_codec": {
+  "stream_codec": {
     "type": "string",
     "value": "flac"
   },

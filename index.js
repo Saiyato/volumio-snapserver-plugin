@@ -210,7 +210,11 @@ snapserver.prototype.updateServerConfig = function(data) {
 	
 	self.updateSnapServerConfig()
 	.then(function(restart){
+		if(self.config.get('enable_debug_logging'))
+			self.logger.info('Config saved, restarting service now...');
 		self.restartService(false);
+		
+		defer.resolve(restart);
 	});
 	
 	if(self.config.get('enable_debug_logging'))
@@ -246,6 +250,7 @@ snapserver.prototype.updateSnapServerConfig = function ()
 		if(self.config.get('enable_debug_logging')) { self.logger.info('systemd unit | ' + full_stream); }			
 		self.streamEdit("^SNAPSERVER_OPTS", "SNAPSERVER_OPTS=\"-d -s " + full_stream + "\"", __dirname + "/default/snapserver", false);
 	}
+	defer.resolve();
 	
 	return defer.promise;
 };
@@ -512,6 +517,13 @@ snapserver.prototype.restartService = function (boot)
 	var defer=libQ.defer();
 
 	var command = "/usr/bin/sudo /bin/systemctl restart snapserver";		
+	if(!boot)
+	{
+		if(self.config.get('enable_debug_logging'))
+			self.logger.info('Reloading daemon, for changes to take effect');
+		command = "/usr/bin/sudo /bin/systemctl daemon-reload && /usr/bin/sudo /bin/systemctl restart snapserver";
+	}
+	
 	exec(command, {uid:1000,gid:1000}, function (error, stdout, stderr) {
 		if (error !== null) {
 			self.commandRouter.pushConsoleMessage('The following error occurred while starting SnapServer: ' + error);
