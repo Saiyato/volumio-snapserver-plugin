@@ -76,14 +76,10 @@ if [ ! -f $INSTALLING ]; then
 	cp /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl.bak
 		
 	# Edit the systemd unit to create fifo pipes
-	systemctl enable /data/plugins/audio_interface/snapserver/unit/secondary-fifo.service
-	systemctl start secondary-fifo.service
+	systemctl enable /data/plugins/audio_interface/snapserver/unit/create-fifo.service
+	systemctl start create-fifo.service
 	systemctl disable snapserver.service
-	
-	# The new way of patching root-owned files from within plugins
-	#systemctl enable /data/plugins/audio_interface/snapserver/unit/snap-activator.service
-	#systemctl start snap-activator.service 
-	
+		
 	# Reload the systemd manager config and restart MPD
 	systemctl daemon-reload
 	systemctl restart mpd
@@ -93,6 +89,7 @@ if [ ! -f $INSTALLING ]; then
 	rm /etc/default/snapserver
 	ln -fs /data/plugins/audio_interface/snapserver/default/snapserver /etc/default/snapserver
 	if($SNAPCONF === "YES"); then
+		echo "Not using new config template, reverting to default"
 		rm /etc/snapserver.conf
 		ln -fs /data/plugins/audio_interface/snapserver/templates/snapserver.conf /etc/snapserver.conf
 		sed -i -- "s|^SNAPSERVER_OPTS.*||g" /etc/default/snapserver

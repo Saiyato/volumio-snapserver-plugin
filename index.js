@@ -212,6 +212,7 @@ snapserver.prototype.updateServerConfig = function(data) {
 	if(self.config.get('enable_debug_logging'))
 		self.logger.info('New config: ' + JSON.stringify(self.config));
 	
+	self.commandRouter.pushToastMessage('success', "Completed", "Successfully updated server configuration");
 	return defer.promise;
 };
 
@@ -239,7 +240,7 @@ snapserver.prototype.updateSnapServerConfig = function ()
 	else
 	{	
 		if(self.config.get('enable_debug_logging')) { self.logger.info('systemd unit | ' + full_stream); }			
-		self.streamEdit("^SNAPSERVER_OPTS", "SNAPSERVER_OPTS=\"-d -s " + full_stream , __dirname + "/default/snapserver", false);
+		self.streamEdit("^SNAPSERVER_OPTS", "SNAPSERVER_OPTS=\"-d -s " + full_stream + "\"", __dirname + "/default/snapserver", false);
 	}
 	
 	return defer.promise;
