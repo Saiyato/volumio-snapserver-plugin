@@ -117,7 +117,7 @@ snapserver.prototype.getUIConfig = function() {
 			self.logger.info("1/3 setting groups loaded");	
 			
 			// Show players
-			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2) | grep -q yes; echo $?");			
+			let mpd = execSync("echo $(sed -n \"/.*type.*\"fifo\"/{n;p}\" /etc/mpd.conf | cut -d '\"' -f2) | grep -q yes; echo $?");
 			uiconf.sections[1].content[0].value = (mpd == 1 ? false : true);
 			uiconf.sections[1].content[0].description = (mpd == 1 ? "Inactive" : "Active");
 			if(self.config.get('enable_debug_logging')) { console.log('mpd: ' + mpd); }
@@ -378,7 +378,7 @@ snapserver.prototype.updateShairportConfig = function(enable) {
 
 	if (enable === true)
 	{
-		self.streamEdit("alsa", "pipe", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+		self.streamEdit("alsa", "pipe =", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 		self.streamEdit("output_device", "name = \"" +  streams.find(c => c.id == [self.config.get('airplay_stream')]).pipe + "\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 	}
 	else
@@ -386,6 +386,9 @@ snapserver.prototype.updateShairportConfig = function(enable) {
 		//self.streamEdit("pipe", "alsa", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 		// The config item 'name' is ambiguous, therefore it can't be rolled back like this.
 		//self.streamEdit("name", "output_device = \"${device}\";", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
+		
+		execSync("sed '/^pipe/,/name/s/name/output_device/' /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl");
+		self.streamEdit("pipe", "alsa", "/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl", false);
 		
 		// Better to create a backup of the original config and restore it.
 		self.restoreShairportConfig();
