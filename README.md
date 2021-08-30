@@ -1,5 +1,6 @@
 # volumio-snapserver-plugin
- A new version of the SnapServer functionality, totally revamped.
+A new version of the SnapServer functionality, totally revamped.
+Note that this is still a WIP, Airplay is not yet supported and you might break your instance. 
 
 ## Files edited by this plugin
 /mnt/overlay/dyn/volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl
@@ -16,6 +17,8 @@ pipe =
   name = "/tmp/snapfifo";
 }
 ```
+
+The enablement of Airplay is theoretical, at some point it worked, but it doesn't seem to work anymore. Work is needed!
 
 ## Working config
 For MPD I use the following:
