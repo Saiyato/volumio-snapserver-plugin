@@ -11,7 +11,7 @@ if [ ! -f $INSTALLING ]; then
 	echo "Detecting CPU architecture and Debian version"
 	ARCH=$(dpkg --print-architecture)
 	DEBIAN_VERSION=$(cat /etc/os-release | grep '^VERSION=' | cut -d '(' -f2 | tr -d ')"')
-	SNAPCONF=NO
+	SNAPCONF="NO"
 	echo "CPU architecture: " $ARCH
 	echo "Debian version: " $DEBIAN_VERSION
 
@@ -73,9 +73,11 @@ if [ ! -f $INSTALLING ]; then
 	esac
 	
 	# Copy shairport config for restoration purposes
+	echo "Creating backups of Airplay configuration, for safe keeping..."
 	cp /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl.bak
 		
 	# Edit the systemd unit to create fifo pipes
+	echo "Creating the fifo file for streaming"
 	systemctl enable /data/plugins/audio_interface/snapserver/unit/create-fifo.service
 	systemctl start create-fifo.service
 	systemctl disable snapserver.service
@@ -86,9 +88,10 @@ if [ ! -f $INSTALLING ]; then
 	systemctl stop snapserver
 	
 	# Remove files and replace them with symlinks
+	echo "Modifying configuration to minimal config for the Volumio use-case..."
 	rm /etc/default/snapserver
 	ln -fs /data/plugins/audio_interface/snapserver/default/snapserver /etc/default/snapserver
-	if($SNAPCONF === "YES"); then
+	if [ $SNAPCONF = "YES" ]; then
 		echo "Not using new config template, reverting to default"
 		rm /etc/snapserver.conf
 		ln -fs /data/plugins/audio_interface/snapserver/templates/snapserver.conf /etc/snapserver.conf
