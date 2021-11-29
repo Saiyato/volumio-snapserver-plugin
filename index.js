@@ -95,7 +95,6 @@ snapserver.prototype.getUIConfig = function() {
 	}];
 	
     var lang_code = this.commandRouter.sharedVars.get('language_code');
-	console.log('#################################### Loading configs');
 
     self.commandRouter.i18nJson(__dirname+'/i18n/strings_'+lang_code+'.json',
         __dirname+'/i18n/strings_en.json',
@@ -235,7 +234,7 @@ snapserver.prototype.updateSnapServerConfig = function ()
 	let format = self.config.get('stream_sample_rate') + ':' + self.config.get('stream_bit_depth') + ':' + self.config.get('stream_channels');
 	let full_format = (format == undefined || format == '48000:16:2' ? '' : '\\&sampleformat=' + format);
 	
-	let codec = (self.config.get('stream_codec') == undefined || self.config.get('stream_codec') == 'flac' ? '' : '\\&codec=' + self.config.get('stream_codec'));
+	let codec = (self.config.get('stream_codec') == undefined || self.config.get('stream_codec') == 'flac') ? '' : '\\&codec=' + self.config.get('stream_codec');
 	let full_stream = stream + full_format + codec;
 	
 	if(fs.existsSync('/etc/snapserver.conf'))
@@ -406,14 +405,14 @@ snapserver.prototype.updateSpotifyConfig = function(volspotconnect2, spop) {
 		// Legacy implementation
 		self.streamEdit("--device ${outdev}", "--backend pipe --device " +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + " ${normalvolume} \\\\", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
 		// New implementation > TOML
-		self.streamEdit("device", "device = \\x27" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + "\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("device-name", "device = \\x27" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + "\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 		self.streamEdit("backend", "backend = \\x27pipe\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 		
 	}
 	else	
 	{
 		self.streamEdit("--backend", "--device ${outdev}", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
-		self.streamEdit("device", "device = \\x27${outdev}\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("device-name", "device-name = \\x27${outdev}\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 		self.streamEdit("backend", "backend = \\x27alsa\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 	}
 	
