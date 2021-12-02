@@ -405,14 +405,14 @@ snapserver.prototype.updateSpotifyConfig = function(volspotconnect2, spop) {
 		// Legacy implementation
 		self.streamEdit("--device ${outdev}", "--backend pipe --device " +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + " ${normalvolume} \\\\", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
 		// New implementation > TOML
-		self.streamEdit("device-name", "device = \\x27" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + "\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("device =", "device = \\x27" +  streams.find(c => c.id == [self.config.get('volspotconnect_stream')]).pipe + "\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 		self.streamEdit("backend", "backend = \\x27pipe\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 		
 	}
 	else	
 	{
 		self.streamEdit("--backend", "--device ${outdev}", "/data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl", false);
-		self.streamEdit("device-name", "device-name = \\x27${outdev}\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
+		self.streamEdit("device = ", "device = \\x27${outdev}\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 		self.streamEdit("backend", "backend = \\x27alsa\\x27", "/data/plugins/music_service/volspotconnect2/volspotify.tmpl", false);
 	}
 	
