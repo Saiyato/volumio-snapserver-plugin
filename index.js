@@ -247,7 +247,7 @@ snapserver.prototype.updateSnapServerConfig = function ()
 	else
 	{	
 		if(self.config.get('enable_debug_logging')) { self.logger.info('systemd unit | ' + full_stream); }			
-		self.streamEdit("^SNAPSERVER_OPTS", "SNAPSERVER_OPTS=\"-d -s " + full_stream + "\"", __dirname + "/default/snapserver", false);
+		self.streamEdit("^SNAPSERVER_OPTS", "SNAPSERVER_OPTS=\"-s " + full_stream + "\"", __dirname + "/default/snapserver", false);
 	}
 	defer.resolve();
 	
