@@ -30,7 +30,6 @@ snapserver.prototype.onVolumioStart = function()
 	var configFile=this.commandRouter.pluginManager.getConfigurationFile(this.context,'config.json');
 	this.config = new (require('v-conf'))();
 	this.config.loadFile(configFile);
-
     return libQ.resolve();
 }
 
@@ -44,11 +43,11 @@ snapserver.prototype.onStart = function() {
 	self.restartService(true)
 	.fail(function(e)
 	{
-		self.commandRouter.pushToastMessage('error', "Startup failed", "Could not start the SnapCast plugin in a fashionable manner.");
-		self.logger.error("Could not start the SnapCast plugin in a fashionable manner. Error: " + e);
+		self.commandRouter.pushToastMessage('error', "Startup failed", "Could not start the SnapServer plugin in a fashionable manner.");
+		self.logger.error("Could not start the SnapServer plugin in a fashionable manner. Error: " + e);
 		defer.reject(new error(e));
 	});
-
+	defer.resolve();
     return defer.promise;
 };
 
