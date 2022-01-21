@@ -6,7 +6,7 @@ if [ ! -f $INSTALLING ]; then
 
 	touch $INSTALLING
 	# Echo version number, for bug tracking purposes
-	echo "## Installing SnapServer plugin v1.2.6 ##"
+	echo "## Installing SnapServer plugin v1.3.9 ##"
 	
 	echo "Detecting CPU architecture and Debian version"
 	ARCH=$(dpkg --print-architecture)
@@ -85,14 +85,14 @@ if [ ! -f $INSTALLING ]; then
 	# Reload the systemd manager config and restart MPD
 	systemctl daemon-reload
 	systemctl restart mpd
-	systemctl stop snapserver
+	systemctl stop snapserver 
 	
 	# Remove files and replace them with symlinks
 	echo "Modifying configuration to minimal config for the Volumio use-case..."
 	rm /etc/default/snapserver
 	ln -fs /data/plugins/audio_interface/snapserver/default/snapserver /etc/default/snapserver
 	if [ $SNAPCONF = "YES" ]; then
-		echo "Not using new config template, reverting to default"
+		echo "Using new config template, removing legacy configuration"
 		rm /etc/snapserver.conf
 		ln -fs /data/plugins/audio_interface/snapserver/templates/snapserver.conf /etc/snapserver.conf
 		sed -i -- "s|^SNAPSERVER_OPTS.*||g" /etc/default/snapserver
@@ -100,6 +100,7 @@ if [ ! -f $INSTALLING ]; then
 	
 	# Cleanup files
 	rm -rf /home/volumio/snapserver
+	chown -R snapserver:snapserver /var/lib/snapserver
 	rm $INSTALLING
 	
 	#required to end the plugin install
