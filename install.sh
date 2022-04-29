@@ -47,44 +47,12 @@ if [ ! -f $INSTALLING ]; then
 	apt-get update && apt-get -f -y install
 	
 	# Link to administrative tools
-	ln -fs /usr/bin/snapserver /usr/sbin/snapserver
-	
-	# Patch Volspotconnect2
-	if [ -d "/data/plugins/music_service/volspotconnect2" ];
-	then
-		# Update volspotconnect2 template file (legacy config)
-		sed -i -- 's|--device ${outdev}.*|--backend pipe --device /tmp/snapfifo ${normalvolume} \\|g' /data/plugins/music_service/volspotconnect2/volspotconnect2.tmpl
-		
-		# Update volspotconnect2 template file (toml template); device and backend are amended
-		sed -i -- 's|device =.*|device = \x27/tmp/snapfifo\x27|g' /data/plugins/music_service/volspotconnect2/volspotify.tmpl
-		sed -i -- 's|backend =.*|backend = \x27pipe\x27|g' /data/plugins/music_service/volspotconnect2/volspotify.tmpl
-	fi
-	
-	# Patch MPD config
-	sed -i -- 's|.*enabled.*|    enabled         "yes"|g' /etc/mpd.conf
-	sed -i -- 's|.*format.*|    format          "44100:16:2"|g' /etc/mpd.conf
-	
-	# Disable standard output to ALSA; insert enabled row below type, or set the value of enabled to "no"
-	ALSA_ENABLED=$(sed -n "/.*type.*\"alsa\"/{n;p}" /etc/mpd.conf)
+	ln -fs /usr/bin/snapserver /usr/sbin/snapserver	
 
-	case $ALSA_ENABLED in
-	 *enabled*) sed -i -- '/.*type.*alsa.*/!b;n;c\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ enabled\ \ \ \ \ \ \ \ \ "no"' /etc/mpd.conf ;;
-	 *) sed -i -- 's|.*type.*alsa.*|&\n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ enabled\ \ \ \ \ \ \ \ \ "no"|g' /etc/mpd.conf ;;
-	esac
-	
-	# Copy shairport config for restoration purposes
-	echo "Creating backups of Airplay configuration, for safe keeping..."
-	cp /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl /volumio/app/plugins/music_service/airplay_emulation/shairport-sync.conf.tmpl.bak
-		
-	# Edit the systemd unit to create fifo pipes
-	echo "Creating the fifo file for streaming"
-	systemctl enable /data/plugins/audio_interface/snapserver/unit/create-fifo.service
-	systemctl start create-fifo.service
 	systemctl disable snapserver.service
 		
-	# Reload the systemd manager config and restart MPD
+	# Reload the systemd manager config
 	systemctl daemon-reload
-	systemctl restart mpd
 	systemctl stop snapserver 
 	
 	# Remove files and replace them with symlinks
