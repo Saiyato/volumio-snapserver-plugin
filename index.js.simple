@@ -1,0 +1,167 @@
+'use strict';
+
+var libQ = require('kew');
+var fs = require('fs-extra');
+var config = new (require('v-conf'))();
+var exec = require('child_process').exec;
+var execSync = require('child_process').execSync;
+
+module.exports = snapserver;
+function snapserver(context) {
+	var self = this;
+
+	this.context = context;
+	this.commandRouter = this.context.coreCommand;
+	this.logger = this.context.logger;
+	this.configManager = this.context.configManager;
+
+}
+
+snapserver.prototype.onVolumioStart = function()
+{
+	var self = this;
+	var configFile=this.commandRouter.pluginManager.getConfigurationFile(this.context,'config.json');
+	this.config = new (require('v-conf'))();
+	this.config.loadFile(configFile);
+    return libQ.resolve();
+}
+
+snapserver.prototype.onStart = function() {
+    var self = this;
+	var defer=libQ.defer();
+
+	if(self.config.get('debug_logging'))
+		console.log('[SnapServer] config: ' + JSON.stringify(self.config));
+	
+	self.restartService(true)
+	.fail(function(e)
+	{
+		self.commandRouter.pushToastMessage('error', "Startup failed", "Could not start the SnapServer plugin in a fashionable manner.");
+		self.logger.error("Could not start the SnapServer plugin in a fashionable manner. Error: " + e);
+		defer.reject(new error(e));
+	});
+	defer.resolve();
+    return defer.promise;
+};
+
+snapserver.prototype.onStop = function() {
+    var self = this;
+    var defer=libQ.defer();
+
+    self.stopService()
+	.fail(function(e)
+	{
+		defer.reject(new error());
+	});
+
+    return libQ.resolve();
+};
+
+snapserver.prototype.onRestart = function() {
+    var self = this;
+    // Optional, use if you need it
+};
+
+
+// Configuration Methods -----------------------------------------------------------------------------
+
+snapserver.prototype.getUIConfig = function() {
+    var defer = libQ.defer();
+    var self = this;
+	if(self.config.get('debug_logging'))
+		console.log('[SnapServer] config: ' + JSON.stringify(self.config));
+		
+    var lang_code = this.commandRouter.sharedVars.get('language_code');
+
+    self.commandRouter.i18nJson(__dirname+'/i18n/strings_'+lang_code+'.json',
+        __dirname+'/i18n/strings_en.json',
+        __dirname + '/UIConfig.json')
+        .then(function(uiconf)
+        {
+			// TODO: replace localhost with ip address of Volumio instance
+			if(self.config.get('debug_logging'))
+				self.logger.info("Nothing to do yet...");
+            defer.resolve(uiconf);
+        })
+        .fail(function(err)
+        {
+			console.log('An error occurred: ' + err);
+            defer.reject(new Error());
+        });
+
+    return defer.promise;
+};
+
+snapserver.prototype.getConfigurationFiles = function() {
+	return ['config.json'];
+}
+
+snapserver.prototype.setUIConfig = function(data) {
+	var self = this;
+	//Perform your installation tasks here
+};
+
+snapserver.prototype.getConf = function(varName) {
+	var self = this;
+	//Perform your installation tasks here
+};
+
+snapserver.prototype.setConf = function(varName, varValue) {
+	var self = this;
+	//Perform your installation tasks here
+};
+
+// Service Control -----------------------------------------------------------------------------------
+
+snapserver.prototype.restartService = function (boot)
+{
+	var self = this;
+	var defer=libQ.defer();
+
+	var command = "/usr/bin/sudo /bin/systemctl restart snapserver";		
+	if(!boot)
+	{
+		if(self.config.get('enable_debug_logging'))
+			self.logger.info('Reloading daemon, for changes to take effect');
+		command = "/usr/bin/sudo /bin/systemctl daemon-reload && /usr/bin/sudo /bin/systemctl restart snapserver";
+	}
+	
+	exec(command, {uid:1000,gid:1000}, function (error, stdout, stderr) {
+		if (error !== null) {
+			self.commandRouter.pushConsoleMessage('The following error occurred while starting SnapServer: ' + error);
+			self.commandRouter.pushToastMessage('error', "Restart failed", "Restarting SnapServer failed with error: " + error);
+			defer.reject();
+		}
+		else {
+			self.commandRouter.pushConsoleMessage('SnapServer started');
+			if(boot == false)
+				self.commandRouter.pushToastMessage('success', "Restarted SnapServer", "Restarted SnapServer for the changes to take effect.");
+			
+			defer.resolve();
+		}
+	});
+
+	return defer.promise;
+};
+
+snapserver.prototype.stopService = function ()
+{
+	var self = this;
+	var defer=libQ.defer();
+
+	var command = "/usr/bin/sudo /bin/systemctl stop snapserver";
+	exec(command, {uid:1000,gid:1000}, function (error, stdout, stderr) {
+		if (error !== null) {
+			self.commandRouter.pushConsoleMessage('The following error occurred while stopping SnapServer: ' + error);
+			self.commandRouter.pushToastMessage('error', "Stopping service failed", "Stopping SnapServer failed with error: " + error);
+			defer.reject();
+		}
+		else {
+			self.commandRouter.pushConsoleMessage('SnapServer stopped');
+			self.commandRouter.pushToastMessage('success', "Stopping", "Stopped SnapServer.");
+			defer.resolve();
+		}
+	});
+
+	return defer.promise;
+};

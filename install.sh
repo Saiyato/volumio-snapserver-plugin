@@ -76,6 +76,8 @@ if [ ! -f $INSTALLING ]; then
 		echo "Disabling complex configuration options, AAMPP will take care of that"
 		mv /data/plugins/audio_interface/snapserver/UIConfig.json /data/plugins/audio_interface/snapserver/UIConfig.json.complex
 		mv /data/plugins/audio_interface/snapserver/UIConfig.json.simple /data/plugins/audio_interface/snapserver/UIConfig.json
+		mv /data/plugins/audio_interface/snapserver/index.js /data/plugins/audio_interface/snapserver/index.js.complex
+		mv /data/plugins/audio_interface/snapserver/index.js.simple /data/plugins/audio_interface/snapserver/index.js
 	fi
 	
 	# Cleanup files
