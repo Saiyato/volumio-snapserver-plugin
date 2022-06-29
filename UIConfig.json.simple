@@ -1,0 +1,22 @@
+{
+	"page": {
+		"label": "TRANSLATE.SNAPSERVER.SNAPSERVERCONF"
+	},
+	"sections": [
+	{
+		"id": "section_general",
+		"element": "section",
+		"label": "TRANSLATE.SNAPSERVER.SNAPUI",
+		"description": "TRANSLATE.SNAPSERVER.D_SNAPUI",
+		"icon": "fa-browser",
+		"content": [{
+			"id": "open_web_UI",
+			"element": "button",
+				"label": "TRANSLATE.SNAPSERVER.SNAPWEB",
+				"description": "TRANSLATE.SNAPSERVER.D_SNAPWEB",
+				"onClick": {
+					"type": "openUrl",
+					"url": "https://localhost:1780"
+		}]
+	}]
+}

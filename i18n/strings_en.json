@@ -71,6 +71,10 @@
 		"AIRPLAY_SVC_STREAM":"Define stream for Airplay playback",
 		"D_SVC_STREAM":"Set the stream name you want to use for this service, this way you can output different services to different stream. Each client can subscribe a specific stream, which means you can play different songs in different spaces.",
 		"DD_SVC_STREAM":"This defines the output stream clients need to connect to",
+	"SNAPUI":"SnapServer UI",
+	"D_SNAPUI":"No other configuration required.",
+		"SNAPWEB":"Open SnapWeb",
+		"D_SNAPWEB":"Open the SnapWeb UI to control multiroom streams and volume, or use the built-in Volumio zone controls to control just the volume.",
 	"SAVE": "Save",
 	"PATCH":"Patch config files"
 	}
