@@ -236,6 +236,7 @@ snapserver.prototype.updateSnapServerConfig = function ()
 	let codec = (self.config.get('stream_codec') == undefined || self.config.get('stream_codec') == 'flac') ? '' : '\\&codec=' + self.config.get('stream_codec');
 	let full_stream = stream + full_format + codec;
 	
+	// New format takes preference
 	if(fs.existsSync('/etc/snapserver.conf'))
 	{
 		if(self.config.get('enable_debug_logging')) { self.logger.info('snapserver.conf | ' + stream); }			
