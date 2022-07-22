@@ -6,7 +6,7 @@ if [ ! -f $INSTALLING ]; then
 
 	touch $INSTALLING
 	# Echo version number, for bug tracking purposes
-	echo "## Installing SnapServer plugin v1.3.9 ##"
+	echo "## Installing SnapServer plugin v2.1.5 ##"
 	
 	echo "Detecting CPU architecture and Debian version"
 	ARCH=$(dpkg --print-architecture)
@@ -71,7 +71,7 @@ if [ ! -f $INSTALLING ]; then
 		sed -i -- "s|^SNAPSERVER_OPTS.*||g" /etc/default/snapserver
 	fi
 	
-	# Fix UIConf to match version (Volumio 3.x makes use of the AAMPP architecture, which remove the need to patch files)
+	# Fix UIConf to match version (Volumio 3.x makes use of the AAMPP architecture, which removes the need to patch files)
 	if [ "$VOLUMIO_MAJOR" -gt "2" ]; then
 		echo "Disabling complex configuration options, AAMPP will take care of that"
 		mv /data/plugins/audio_interface/snapserver/UIConfig.json /data/plugins/audio_interface/snapserver/UIConfig.json.complex
